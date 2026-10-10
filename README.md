@@ -37,7 +37,7 @@
   - [方式二：独立 CLI](#方式二独立-cli)
   - [方式三：作为各平台 Agent Skill 安装](#方式三作为各平台-agent-skill-安装)
   - [方式四：全渠道比价](#方式四全渠道比价)
-- [工具能力总览](#工具能力总览)
+- [工具能力总览（35 个）](#工具能力总览35-个)
 - [作为 Agent Skill 使用](#作为-agent-skill-使用)
 - [错误处理](#错误处理)
 - [开发与测试](#开发与测试)
@@ -96,7 +96,7 @@
 </div>
 
 <details>
-<summary>查看文本版报告</summary>
+<summary>查看文本版报告（节选）</summary>
 
 ```text
 ========================================================================
@@ -153,6 +153,8 @@ maimai-saver/
 ```
 
 ## 快速开始
+
+四种方式按需选择：方式一/三面向 Agent 对话场景（推荐），方式二适合脚本与自动化调试，方式四为可选的省钱增强。所有方式都依赖下方申请的 MCP Token。
 
 ### 申请 MCP Token
 
@@ -226,7 +228,7 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 > 比价结果为本地估算（团购平台无公开 API，数据手动录入），方法论见
 > [`references/group-buy-comparison.md`](references/group-buy-comparison.md)。
 
-## 工具能力总览
+## 工具能力总览（35 个）
 
 | 业务域 | 工具 |
 |---|---|
@@ -244,14 +246,7 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 
 ## 作为 Agent Skill 使用
 
-将本仓库克隆到 Agent 的技能目录，Agent 即可依据 `SKILL.md` 中的触发词与
-工作流自动调用：
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git ~/.workbuddy/skills/maimai-saver
-```
-
-Skill 内置四条规范，确保 Agent 行为可控且省钱可验证：
+安装步骤见[方式三](#方式三作为各平台-agent-skill-安装)。安装完成后，Agent 将依据 `SKILL.md` 中的触发词与工作流自动调用。技能内置四条规范，确保 Agent 行为可控且省钱可验证：
 
 1. **先查后改**：所有写操作前必须先完成查询，上下文齐备。
 2. **下单必确认**：任何下单/取消/兑换/抽奖操作前，必须向用户展示关键信息并获得明确确认；支付链接仅原样转交，由用户自行支付。
@@ -284,7 +279,7 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行上述检�
 
 ## 贡献
 
-欢迎通过 Issue / PR 参与：新增工作流文档、英文 README、工具目录更新
+欢迎通过 Issue / PR 参与：工作流文档、中英文档校对、工具目录更新
 （麦当劳 MCP 版本迭代较快，以 `tools` 子命令的实时结果为准）。
 
 ## 许可证
