@@ -109,7 +109,7 @@ Cross-channel comparison report (`deal_compare.py compare`):
 </div>
 
 <details>
-<summary>View the text version</summary>
+<summary>View the text version (excerpt)</summary>
 
 ```text
 ========================================================================
@@ -166,6 +166,10 @@ maimai-saver/
 ```
 
 ## Quick start
+
+Pick what fits: Options A/C target agent conversations (recommended), Option B
+suits scripts and debugging, Option D is an optional savings booster. All of
+them require the MCP token from step one.
 
 ### Get an MCP Token
 
@@ -257,14 +261,10 @@ Full catalog and usage notes: [`references/tools.md`](references/tools.md).
 
 ## Use as an Agent Skill
 
-Clone the repo into your agent's skill directory and the agent will follow the
-triggers and workflows defined in `SKILL.md`:
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git ~/.workbuddy/skills/maimai-saver
-```
-
-Four conduct rules keep agent behavior safe and verifiable:
+See [Option C](#option-c-install-as-an-agent-skill) for installation. Once
+installed, the agent follows the triggers and workflows defined in `SKILL.md`.
+Four conduct rules are built into the skill to keep agent behavior safe and
+verifiable:
 
 1. **Query before write** — gather full context before any mutating call.
 2. **Confirm before ordering** — show key details and get explicit confirmation;
