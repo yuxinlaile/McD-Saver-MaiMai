@@ -18,8 +18,14 @@ deal_compare.py add（录入本地券库 ~/.maimai_saver/deals.json）
 deal_compare.py compare（与官方渠道 MCP 计算价格比价，输出推荐）
 ```
 
-`scripts/deal_compare.py` 的数据层是插件化的：未来若相关平台开放官方接口，
-可在 `_load_deals` 处接入 provider 而无需改动决策逻辑。
+`scripts/deal_compare.py` 的数据层是插件化的：
+
+- **本地券库**（默认）：`~/.maimai_saver/deals.json`，通过 `add` 子命令录入；
+- **外部数据源 provider（预留接口）**：设置环境变量 `MAIMAI_DEALS_PROVIDER`
+  指向一个 Python 模块文件（需实现 `load_deals() -> list[dict]`，返回与券库
+  JSON 相同结构的列表），即可在不改动决策逻辑的情况下接入自动化数据源；
+  provider 加载失败时自动回退本地券库。若美团/抖音等平台未来开放官方 API，
+  只需实现对应 provider，无需修改任何其他代码。
 
 ## 二、录入字段与获取方式
 

@@ -22,6 +22,12 @@ jobs:
       - name: Syntax check
         run: python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v
+
       - name: CLI smoke test
         run: |
           python scripts/mcd.py --help

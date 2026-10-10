@@ -71,6 +71,38 @@ TIME_MODES = ("any", "limited")  # 全时段可用 / 限时段可用
 # 券库读写
 # ---------------------------------------------------------------------------
 def _load_deals(path: str) -> List[Dict[str, Any]]:
+    """加载团购券数据。
+
+    数据源优先级：
+    1. ``MAIMAI_DEALS_PROVIDER`` 环境变量指定的 provider 模块（.py 文件，
+       需实现 ``load_deals() -> list[dict]``）——为未来美团/抖音等平台开放
+       官方 API 时的自动化接入预留的插件接口，provider 异常时自动回退；
+    2. 本地券库 JSON 文件（默认 ~/.maimai_saver/deals.json）。
+    """
+    provider_path = os.environ.get("MAIMAI_DEALS_PROVIDER")
+    if provider_path:
+        try:
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location(
+                "maimai_deals_provider", provider_path
+            )
+            if spec is not None and spec.loader is not None:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                provided = module.load_deals()
+                if isinstance(provided, list):
+                    return provided
+                print(
+                    "警告: 数据源 {0} 的 load_deals() 未返回列表，已忽略。".format(provider_path),
+                    file=sys.stderr,
+                )
+        except Exception as exc:  # noqa: BLE001 - 外部数据源失败不应中断本地券库
+            print(
+                "警告: 加载团购数据源 {0} 失败: {1}，回退到本地券库。".format(provider_path, exc),
+                file=sys.stderr,
+            )
+
     if not os.path.isfile(path):
         return []
     try:

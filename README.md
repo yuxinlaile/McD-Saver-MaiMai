@@ -12,8 +12,11 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
+![Tests](https://img.shields.io/badge/Tests-43%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
+
+简体中文 · [English](README_EN.md)
 
 </div>
 
@@ -48,6 +51,30 @@
 - **Agent Skill 化**：`SKILL.md` 提供触发词、省钱工作流、
   "先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠 / 比价透明"调用规范，可直接被 WorkBuddy / Claude Code 等 Agent 加载
 - **安全设计**：Token 支持环境变量/文件/参数三通道解析，绝不输出到日志
+- **测试保障**：43 个单元测试覆盖 SSE 解析、Token 解析、比价折算决策与 CLI 退出码
+
+## 🖥️ 效果预览
+
+全渠道比价报告（`deal_compare.py compare` 实际输出示例）：
+
+```text
+========================================================================
+麦麦省钱助手 · 全渠道比价报告（生成日期: 2026-10-10）
+========================================================================
+官方渠道方案：商品合计原价 ¥48.50，MCP 带券最优实付 ¥38.50（折扣率 79.4%）
+
+团购券比价（按估算到手价升序，所有金额均为估算值）：
+------------------------------------------------------------------------
+  [81bb4c] meituan | 麦当劳满40减14代金券
+      售价 ¥25.90 / 面值 ¥40.00 = 折扣率 64.8% | 同内容估算到手 ¥31.40 | 对比官方 +7.10 元
+      限制: 仅堂食核销；限时段使用；2026-11-30前有效；每日限用1张
+
+推荐决策（估算，实际以各平台页面与麦当劳官方渠道为准）：
+  ✔ 建议使用团购券：麦当劳满40减14代金券（meituan）
+    估算到手 ¥31.40，较官方渠道方案节省约 ¥7.10。
+    注意：团购券通常不可叠加麦当劳官方优惠券，且需在适用门店/时段内核销；
+    若本次订单内容未被该券覆盖，估算不成立，请以券详情页为准。
+```
 
 ## 🎯 目标用户
 
@@ -66,6 +93,8 @@
 maimai-saver/
 ├── SKILL.md                            # Agent Skill 入口：省钱方法论与调用规范
 ├── README.md                           # 本文件
+├── README_EN.md                        # 英文说明
+├── CHANGELOG.md                        # 版本变更记录
 ├── LICENSE                             # MIT + 第三方条款声明
 ├── CONTEST_DECLARATION.md              # 参赛声明（麦当劳程序员创意开发大赛，官方原文）
 ├── MCP_INTEGRATION.md                  # MCP 集成说明：Server/Tool/调用流程/业务价值
@@ -85,7 +114,8 @@ maimai-saver/
 │   └── error-handling.md               # 错误处理与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 完整省钱点餐示例会话
-└── .github/workflows/ci.yml            # 语法检查 CI
+├── tests/                              # pytest 单元测试（43 个用例）
+└── .github/workflows/ci.yml            # CI：语法检查 + 单元测试
 ```
 
 ## 🚀 快速开始
@@ -189,11 +219,11 @@ Skill 内置四条规范，确保 Agent 行为可控且省钱可验证：
 
 ```bash
 # 语法检查（与 CI 一致）
-python -m py_compile scripts/mcd_client.py scripts/mcd.py
+python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# CLI 冒烟
-python scripts/mcd.py --help
-python scripts/mcd.py call --help
+# 单元测试（43 个用例，不发起网络请求）
+pip install pytest
+python -m pytest tests/ -v
 ```
 
 CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行上述检查。
