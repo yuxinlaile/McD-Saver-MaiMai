@@ -203,9 +203,6 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行上述检�
 欢迎通过 Issue / PR 参与：新增工作流文档、英文 README、工具目录更新
 （麦当劳 MCP 版本迭代较快，以 `tools` 子命令的实时结果为准）。
 
-提交前请确认：
-- 不包含任何真实 Token
-- `python -m py_compile scripts/*.py` 通过
 
 ## 📄 许可证
 
