@@ -147,6 +147,15 @@ def _fmt_money(value: float) -> str:
     return "¥{0:.2f}".format(value)
 
 
+def _validity_badge(validity: str) -> str:
+    """返回券有效性对应的展示徽标。"""
+    return {
+        "ok": "",
+        "expiring": " [即将过期]",
+        "expired": " [已过期]",
+    }.get(validity, "")
+
+
 def compare_deals(
     deals: List[Dict[str, Any]], mcd_face: float, mcd_price: float, today: Optional[date] = None
 ) -> Dict[str, Any]:
@@ -204,11 +213,7 @@ def _print_report(report: Dict[str, Any]) -> int:
     print("团购券比价（按估算到手价升序，所有金额均为估算值）：")
     print("-" * 72)
     for entry in report["deals"]:
-        validity_badge = {
-            "ok": "",
-            "expiring": " [即将过期]",
-            "expired": " [已过期，仅存档]",
-        }.get(entry["validity"], "")
+        validity_badge = _validity_badge(entry["validity"])
         print("  [{0}] {1} | {2}{3}".format(
             entry.get("id", "?"), entry.get("platform", "?"), entry.get("title", ""), validity_badge))
         print("      售价 {0} / 面值 {1} = 折扣率 {2:.1%} | 同内容估算到手 {3} | 对比官方 {4:+.2f} 元".format(
@@ -347,8 +352,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             return EXIT_OK
         today = date.today()
         for deal in deals:
-            badge = {"ok": "", "expiring": " [即将过期]", "expired": " [已过期]"}.get(
-                _deal_validity(deal, today), "")
+            badge = _validity_badge(_deal_validity(deal, today))
             print("[{0}] {1} | {2}{3}".format(deal.get("id"), deal.get("platform"), deal.get("title"), badge))
             print("     售价 {0} / 面值 {1} | 渠道 {2} | 时段 {3}".format(
                 _fmt_money(float(deal.get("price", 0))),

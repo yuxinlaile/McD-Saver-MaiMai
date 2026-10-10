@@ -15,7 +15,7 @@
     * 网络错误 / 超时               -> 自动重试
     * JSON-RPC error / isError      -> McpToolError
 
-仅依赖 Python 标准库（3.9+），无需安装任何第三方依赖。
+仅依赖 Python 标准库（3.9+），无需安装任何第三方运行时依赖。
 
 安全约定：本模块绝不会将 Token 打印到日志或异常消息中。
 
@@ -33,10 +33,11 @@ from __future__ import annotations
 import json
 import os
 import random
+import sys
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 __all__ = [
     "McpError",
@@ -65,8 +66,8 @@ DEFAULT_TOKEN_FILE = "~/.mcd_mcp_token"
 # MCP 协议版本（Streamable HTTP 传输规范）
 PROTOCOL_VERSION = "2025-03-26"
 
-CLIENT_INFO = {"name": "maimai-saver", "version": "1.2.0"}
-USER_AGENT = "maimai-saver/1.2.0"
+CLIENT_INFO = {"name": "maimai-saver", "version": "1.2.1"}
+USER_AGENT = "maimai-saver/1.2.1"
 
 
 # ---------------------------------------------------------------------------
@@ -134,13 +135,39 @@ def load_token(cli_token: Optional[str] = None) -> Optional[str]:
     return None
 
 
+def _compute_backoff(attempt: int, retry_after: float = 0.0) -> float:
+    """计算第 attempt 次重试前的等待秒数（指数退避 + 随机抖动）。
+
+    规则：``max(Retry-After, 2**attempt + jitter)``，封顶
+    ``MAX_BACKOFF_SECONDS``。jitter 取 [0, 1) 均匀随机值。
+
+    Args:
+        attempt: 已失败次数（0 表示首次失败后）。
+        retry_after: 服务器 Retry-After 响应头值（秒），无则传 0。
+    """
+    base = 2.0 ** attempt + random.uniform(0.0, 1.0)
+    return min(max(retry_after, base), MAX_BACKOFF_SECONDS)
+
+
+def _parse_retry_after(value: Optional[str]) -> float:
+    """将 Retry-After 响应头解析为秒数；非法或缺失时返回 0。"""
+    if not value:
+        return 0.0
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        return 0.0
+
+
 def _parse_sse(body: str) -> List[Dict[str, Any]]:
     """解析 text/event-stream 响应体，返回其中的 JSON-RPC 消息列表。
 
     Streamable HTTP 规范允许服务器以 SSE 帧返回 JSON-RPC 响应，
     每个事件块可能包含多行 ``data:`` 字段（需按换行拼接后再解析 JSON）。
     心跳注释行（以 ``:`` 开头）与空块会被忽略。
+    换行符先做 CRLF/CR 归一化，兼容不同服务器的帧分隔风格。
     """
+    body = body.replace("\r\n", "\n").replace("\r", "\n")
     events: List[Dict[str, Any]] = []
     for block in body.split("\n\n"):
         data_lines = []
@@ -185,7 +212,7 @@ class McdMcpClient:
 
     Args:
         token: MCP Token（必填）。推荐通过 :func:`load_token` 解析。
-        base_url: MCP Server 地址，默认 ``https://mcd.mcd.cn``。
+        base_url: MCP Server 地址，默认 ``https://mcp.mcd.cn``。
         timeout: 单次 HTTP 请求超时秒数。
         max_retries: 针对可重试错误（429/5xx/网络错误）的最大自动重试次数。
         verbose: 输出简要调试信息到 stderr（绝不包含 Token）。
@@ -223,8 +250,7 @@ class McdMcpClient:
     # -- 内部：日志 ---------------------------------------------------------
     def _log(self, message: str) -> None:
         if self.verbose:
-            import sys
-            print(f"[mcd-mcp] {message}", file=sys.stderr)
+            print("[mcd-mcp] {0}".format(message), file=sys.stderr)
 
     # -- 内部：请求头 -------------------------------------------------------
     def _headers(self) -> Dict[str, str]:
@@ -253,6 +279,37 @@ class McdMcpClient:
             return json.loads(raw)
         except json.JSONDecodeError:
             return None
+
+    # -- 内部：JSON-RPC 消息构造 --------------------------------------------
+    def _jsonrpc(
+        self,
+        method: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        is_notification: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """构造并发送一条 JSON-RPC 消息，返回解码后的响应消息。
+
+        通知类消息（无 id）无响应体，返回 None；其余消息必须携带 result，
+        否则抛出 TransportError。
+
+        Raises:
+            TransportError: 服务器未返回有效 JSON-RPC 消息。
+        """
+        self._request_id += 1
+        payload: Dict[str, Any] = {
+            "jsonrpc": "2.0",
+            "id": self._request_id,
+            "method": method,
+        }
+        if params is not None:
+            payload["params"] = params
+        message = self._post(payload, is_notification=is_notification)
+        if is_notification:
+            return None
+        if message is None or "result" not in message:
+            raise TransportError("{0} 未返回有效结果".format(method))
+        return message
 
     # -- 内部：带重试的 POST ------------------------------------------------
     def _post(
@@ -298,25 +355,21 @@ class McdMcpClient:
                     ) from exc
 
                 if exc.code == 429:
-                    retry_after_header = exc.headers.get("Retry-After") if exc.headers else None
-                    try:
-                        retry_after = float(retry_after_header) if retry_after_header else 0.0
-                    except ValueError:
-                        retry_after = 0.0
                     last_error = RateLimitError(
                         "触发限流（HTTP 429）：每个 Token 每分钟最多 600 次请求，"
                         "请降低调用频率。"
                     )
                     if attempt < self.max_retries:
-                        wait = max(retry_after, 2.0 ** attempt + random.uniform(0.0, 1.0))
-                        wait = min(wait, MAX_BACKOFF_SECONDS)
+                        wait = _compute_backoff(attempt, _parse_retry_after(
+                            exc.headers.get("Retry-After") if exc.headers else None
+                        ))
                         self._log("429 限流，{0:.1f}s 后进行第 {1} 次重试".format(wait, attempt + 1))
                         time.sleep(wait)
                         continue
                     raise last_error from exc
 
                 if exc.code >= 500 and attempt < self.max_retries:
-                    wait = min(2.0 ** attempt + random.uniform(0.0, 1.0), MAX_BACKOFF_SECONDS)
+                    wait = _compute_backoff(attempt)
                     self._log("HTTP {0}，{1:.1f}s 后进行第 {2} 次重试".format(exc.code, wait, attempt + 1))
                     time.sleep(wait)
                     continue
@@ -328,7 +381,7 @@ class McdMcpClient:
             except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
                 last_error = TransportError("网络错误：{0}".format(exc))
                 if attempt < self.max_retries:
-                    wait = min(2.0 ** attempt + random.uniform(0.0, 1.0), MAX_BACKOFF_SECONDS)
+                    wait = _compute_backoff(attempt)
                     self._log("网络错误，{0:.1f}s 后进行第 {1} 次重试".format(wait, attempt + 1))
                     time.sleep(wait)
                     continue
@@ -343,29 +396,22 @@ class McdMcpClient:
         Returns:
             initialize 结果（含 serverInfo、capabilities 等）。
         """
-        self._request_id += 1
-        init_payload = {
-            "jsonrpc": "2.0",
-            "id": self._request_id,
-            "method": "initialize",
-            "params": {
+        message = self._jsonrpc(
+            "initialize",
+            {
                 "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": {},
                 "clientInfo": CLIENT_INFO,
             },
-        }
-        result = self._post(init_payload)
-        if result is None or "result" not in result:
+        )
+        result = message["result"] if message else None
+        if not isinstance(result, dict):
             raise TransportError("initialize 未返回有效结果")
         # 发送 initialized 通知（无响应体）
-        self._post(
-            {"jsonrpc": "2.0", "method": "notifications/initialized"},
-            is_notification=True,
-        )
+        self._jsonrpc("notifications/initialized", is_notification=True)
         self._initialized = True
-        server_info = result.get("result", {}).get("serverInfo", {})
-        self._log("会话已建立: {0}".format(server_info))
-        return result["result"]
+        self._log("会话已建立: {0}".format(result.get("serverInfo", {})))
+        return result
 
     def _ensure_initialized(self) -> None:
         if not self._initialized:
@@ -395,16 +441,8 @@ class McdMcpClient:
     def list_tools(self) -> List[Dict[str, Any]]:
         """获取 MCP Server 支持的全部工具（含名称、描述与入参 schema）。"""
         self._ensure_initialized()
-        self._request_id += 1
-        payload = {
-            "jsonrpc": "2.0",
-            "id": self._request_id,
-            "method": "tools/list",
-        }
-        message = self._post(payload)
-        if message is None or "result" not in message:
-            raise TransportError("tools/list 未返回有效结果")
-        tools = message["result"].get("tools", [])
+        message = self._jsonrpc("tools/list")
+        tools = message["result"].get("tools", []) if message else []
         return tools if isinstance(tools, list) else []
 
     def get_tool_schema(self, name: str) -> Optional[Dict[str, Any]]:
@@ -430,14 +468,9 @@ class McdMcpClient:
             McpToolError: 服务器返回 JSON-RPC error，或结果中 isError=true。
         """
         self._ensure_initialized()
-        self._request_id += 1
-        payload = {
-            "jsonrpc": "2.0",
-            "id": self._request_id,
-            "method": "tools/call",
-            "params": {"name": name, "arguments": arguments or {}},
-        }
-        message = self._post(payload)
+        message = self._jsonrpc(
+            "tools/call", {"name": name, "arguments": arguments or {}}
+        )
         if message is None:
             raise TransportError("服务器未返回任何 JSON-RPC 响应")
 

@@ -4,8 +4,11 @@ import json
 import pytest
 
 from mcd_client import (
+    MAX_BACKOFF_SECONDS,
     AuthError,
     McdMcpClient,
+    _compute_backoff,
+    _parse_retry_after,
     _parse_sse,
     load_token,
     result_to_text,
@@ -39,6 +42,38 @@ class TestParseSse:
 
     def test_empty_body(self):
         assert _parse_sse("") == []
+
+    def test_crlf_line_endings(self):
+        # 部分服务器以 CRLF 分隔 SSE 帧，解析前需归一化换行
+        body = 'data: {"id": 1}\r\n\r\ndata: {"id": 2}\r\n\r\n'
+        assert [e["id"] for e in _parse_sse(body)] == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# 重试退避计算
+# ---------------------------------------------------------------------------
+class TestBackoff:
+    def test_grows_with_attempt(self):
+        assert _compute_backoff(2) > _compute_backoff(0)
+
+    def test_respects_retry_after(self):
+        # Retry-After 大于指数退避基数时必须等待至少 Retry-After 秒
+        assert _compute_backoff(0, retry_after=10.0) >= 10.0
+
+    def test_capped_at_max(self):
+        for attempt in (0, 2, 8):
+            assert _compute_backoff(attempt, retry_after=999.0) <= MAX_BACKOFF_SECONDS
+
+    def test_non_negative(self):
+        assert _compute_backoff(0) >= 0.0
+        assert _compute_backoff(0, retry_after=-5.0) >= 0.0
+
+    def test_parse_retry_after(self):
+        assert _parse_retry_after("5") == 5.0
+        assert _parse_retry_after("0.5") == 0.5
+        assert _parse_retry_after(None) == 0.0
+        assert _parse_retry_after("abc") == 0.0
+        assert _parse_retry_after("-3") == 0.0
 
 
 # ---------------------------------------------------------------------------

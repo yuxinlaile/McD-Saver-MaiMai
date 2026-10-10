@@ -3,6 +3,23 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式，
 版本号遵循语义化版本（SemVer）。
 
+## [1.2.1] - 2026-10-10
+
+### Added
+- `requirements-dev.txt`：声明开发与测试依赖（pytest）；CI 改为安装该文件
+- 单元测试新增：SSE 流 CRLF 换行兼容用例、重试退避计算边界用例
+
+### Changed
+- `mcd_client.py` 内部重构（公开接口与行为完全兼容）：提取 `_jsonrpc()` 消除
+  initialize/tools/list/tools/call 三处的重复消息构造；提取 `_compute_backoff()`
+  与 `_parse_retry_after()` 统一 429/5xx/网络错误的退避计算；`import sys` 归位模块顶部
+- `_parse_sse()` 增加 CRLF/CR 换行归一化，兼容不同服务器的 SSE 帧分隔风格
+- `deal_compare.py`：券有效期徽标逻辑收敛为 `_validity_badge()`，消除两处重复
+
+### Fixed
+- 修正 `McdMcpClient` docstring 中默认地址的笔误（mcd.mcd.cn -> mcp.mcd.cn）
+- 清理 `mcd_client.py` 未使用的 `Union` 类型导入
+
 ## [1.2.0] - 2026-10-10
 
 ### Added

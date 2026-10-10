@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-43%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-49%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -26,23 +26,43 @@
 
 ## 目录
 
+- [项目简介](#项目简介)
 - [免责声明](#免责声明)
-- [功能特性](#功能特性)
+- [核心功能](#核心功能)
+- [工具能力总览](#工具能力总览)
+- [技术栈](#技术栈)
 - [目标用户](#目标用户)
 - [效果预览](#效果预览)
 - [目录结构](#目录结构)
-- [快速开始](#快速开始)
+- [环境要求](#环境要求)
+- [安装步骤](#安装步骤)
   - [申请 MCP Token](#申请-mcp-token)
   - [方式一：MCP 客户端直连](#方式一mcp-客户端直连)
-  - [方式二：独立 CLI](#方式二独立-cli)
-  - [方式三：作为各平台 Agent Skill 安装](#方式三作为各平台-agent-skill-安装)
+  - [方式二：Agent Skill 安装](#方式二agent-skill-安装)
+  - [方式三：CLI 独立使用](#方式三cli-独立使用)
   - [方式四：全渠道比价](#方式四全渠道比价)
-- [工具能力总览（35 个）](#工具能力总览35-个)
-- [作为 Agent Skill 使用](#作为-agent-skill-使用)
-- [错误处理](#错误处理)
-- [开发与测试](#开发与测试)
-- [贡献](#贡献)
+- [运行与命令](#运行与命令)
+- [配置说明](#配置说明)
+- [常见问题](#常见问题)
+- [测试方式](#测试方式)
+- [贡献指南](#贡献指南)
 - [许可证](#许可证)
+
+## 项目简介
+
+麦麦省钱助手是一个以“省钱”为核心目标的麦当劳点餐 Agent Skill：它不是简单地
+帮你下单，而是在**下单前强制执行省钱检查**——先把可领的券领完、再挑出当前
+订单最优券、用 `calculate-price` 做无券/带券双价对比、最后评估积分兑换是否
+更划算，然后把省钱明细（原价、优惠、实付、节省比例）一并展示给你确认。
+
+项目同时提供：
+
+- **Agent Skill**：一份 `SKILL.md` 遵循开放 Agent Skills 标准，可直接安装到
+  WorkBuddy / Claude Code / Cursor / OpenAI Codex；
+- **独立 CLI**：`scripts/mcd.py` 直连官方 MCP Server，无需任何 MCP 客户端，
+  适合脚本与自动化场景；
+- **全渠道比价引擎**：`scripts/deal_compare.py` 将美团/抖音等平台的麦当劳
+  团购券（手动录入）与官方价格做同口径估算比价，输出“官方 vs 团购”决策建议。
 
 ## 免责声明
 
@@ -54,27 +74,49 @@
 - "McDonald's"、"麦当劳"、"麦乐送"、"麦麦"等名称与商标权利归属麦当劳公司，
   本项目不构成对上述商标的任何授权。
 
-## 功能特性
+## 核心功能
 
-- **省钱导向**：内置"省钱四步检查"与十一大省钱策略——领券前置、
-  门店选券、无券/带券双价对比、积分抵扣评估、套餐零成本替换、
-  活动情报、免费抽奖提醒、团餐满减、答卷奖券回收、卡类价值评估
-- **全渠道比价**：内置团购比价引擎 `deal_compare.py`，将美团/抖音等平台的
-  麦当劳团购券（手动录入，无公开 API）与官方渠道价格做同口径估算比价，
-  输出"官方 vs 团购"决策建议（含叠加规则与限制提示）
+- **省钱导向**：内置“省钱四步检查”与十一大省钱策略——领券前置、门店选券、
+  无券/带券双价对比、积分抵扣评估、套餐零成本替换、活动情报、免费抽奖提醒、
+  团餐满减、答卷奖券回收、卡类价值评估
+- **全渠道比价**：美团/抖音团购券（手动录入，平台无公开 API）与官方渠道价格
+  同口径估算对比，输出决策建议并提示叠加规则与限制条件
 - **零依赖**：核心客户端仅使用 Python 3.9+ 标准库，克隆即用
-- **完整 MCP 生命周期**：`initialize` → `tools/list` → `tools/call`，
-  自动维护 `Mcp-Session-Id` 会话，兼容 `application/json` 与 `text/event-stream` 两种响应
-- **生产级错误处理**：
-  - 401 鉴权失败：快速失败并给出修复指引（不无谓重试）
-  - 429 限流：指数退避 + 随机抖动自动重试，尊重 `Retry-After`
-  - 5xx / 网络错误：自动重试
-  - JSON-RPC error / `isError`：结构化异常（`McpToolError`）携带原始错误数据
-- **Agent Skill 化**：`SKILL.md` 提供触发词、省钱工作流、
-  "先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠 / 比价透明"调用规范，
-  可直接被 WorkBuddy / Claude Code / Cursor / Codex 等 Agent 加载
+- **完整 MCP 生命周期**：`initialize` → `tools/list` → `tools/call`，自动维护
+  `Mcp-Session-Id` 会话，兼容 `application/json` 与 `text/event-stream` 响应
+- **生产级错误处理**：401 快速失败不重试；429 指数退避 + 随机抖动自动重试并
+  尊重 `Retry-After`；5xx/网络错误自动重试；工具层错误结构化（`McpToolError`）
+- **Agent Skill 化**：`SKILL.md` 提供触发词、省钱工作流与调用规范
+  （先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠 / 比价透明）
 - **安全设计**：Token 支持环境变量/文件/参数三通道解析，绝不输出到日志
-- **测试保障**：43 个单元测试覆盖 SSE 解析、Token 解析、比价折算决策与 CLI 退出码
+- **测试保障**：49 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
+  比价折算决策与 CLI 退出码
+
+## 工具能力总览
+
+| 业务域 | 工具 |
+|---|---|
+| 营养健康 | `list-nutrition-foods` |
+| 地址与门店 | `delivery-query-addresses` `delivery-create-address` `delivery-query-stores` `query-nearby-stores` `query-meal-assistance` |
+| 菜单与价格 | `query-meals` `query-meal-detail` `calculate-price` `query-promotions` |
+| 点餐与订单 | `create-order` `cancel-order` `query-order` `order-list` `query-survey-coupon` |
+| 优惠券 | `query-store-coupons` `available-coupons` `auto-bind-coupons` `query-my-coupons` |
+| 积分与商城 | `query-my-account` `mall-points-products` `mall-product-detail` `mall-create-order` `mall-order-list` `mall-order-detail` |
+| 积分抽奖 | `query-lottery-info` `draw-lottery` `query-my-prizes` |
+| 主题活动 | `query-party-city` `query-party-store` `query-partystore-date` `query-partystore-session` `party-order-create` |
+| 辅助 | `now-time-info` `campaign-calendar` |
+
+完整说明与使用要点见 [`references/tools.md`](references/tools.md)。
+
+## 技术栈
+
+| 层面 | 技术 |
+|---|---|
+| 语言/运行时 | Python 3.9+（仅标准库：`urllib` / `json` / `argparse` / `datetime` / `uuid`） |
+| 协议 | MCP Streamable HTTP + JSON-RPC 2.0（SSE 与 JSON 双格式响应） |
+| 测试 | pytest（开发依赖，见 `requirements-dev.txt`） |
+| CI | GitHub Actions（语法检查 + 单元测试，Python 3.9/3.11/3.13 矩阵） |
+| 运行时第三方依赖 | **无** |
 
 ## 目标用户
 
@@ -124,37 +166,48 @@
 ```
 maimai-saver/
 ├── SKILL.md                            # Agent Skill 入口：省钱方法论与调用规范
-├── README.md                           # 本文件
-├── README_EN.md                        # 英文说明
+├── README.md / README_EN.md            # 项目说明（中/英）
 ├── CHANGELOG.md                        # 版本变更记录
 ├── LICENSE                             # MIT + 第三方条款声明
-├── CONTEST_DECLARATION.md              # 参赛声明（麦当劳程序员创意开发大赛，官方原文）
+├── CONTEST_DECLARATION.md              # 参赛声明（官方原文，未改动）
 ├── MCP_INTEGRATION.md                  # MCP 集成说明：Server/Tool/调用流程/业务价值
 ├── mcp-config.example.json             # 脱敏 MCP 配置（仅环境变量占位符）
-├── workbuddy.md                        # WorkBuddy 对话上下文（WorkBuddy 专项奖励核验）
+├── workbuddy.md                        # WorkBuddy 对话上下文（参赛专项奖励核验）
+├── requirements-dev.txt                # 开发/测试依赖（pytest）
 ├── config/
 │   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
 ├── scripts/
 │   ├── mcd_client.py                   # MCP Streamable HTTP 客户端核心（纯标准库）
-│   ├── mcd.py                          # CLI：check / tools / schema / call
-│   └── deal_compare.py                 # 全渠道比价引擎（美团/抖音团购券手动录入）
+│   ├── mcd.py                          # CLI 入口：check / tools / schema / call
+│   └── deal_compare.py                 # 全渠道比价引擎（美团/抖音券手动录入）
 ├── references/
 │   ├── tools.md                        # 35 个工具完整目录
 │   ├── money-saving-strategies.md      # 十一大省钱策略详解（核心参考）
 │   ├── agent-skill-installation.md     # WorkBuddy/Claude Code/Cursor/Codex 安装指南
 │   ├── group-buy-comparison.md         # 外部团购比价方法论
 │   ├── workflows.md                    # 业务工作流详解（含省钱检查前置流程）
-│   └── error-handling.md               # 错误处理与排查指南
+│   └── error-handling.md               # 错误码、重试策略与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 完整省钱点餐示例会话
 ├── docs/assets/                        # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（43 个用例）
+├── tests/                              # pytest 单元测试（49 个用例）
 └── .github/                            # CI + Issue/PR 模板
 ```
 
-## 快速开始
+## 环境要求
 
-四种方式按需选择：方式一/三面向 Agent 对话场景（推荐），方式二适合脚本与自动化调试，方式四为可选的省钱增强。所有方式都依赖下方申请的 MCP Token。
+| 项目 | 要求 |
+|---|---|
+| Python | 3.9 或更高版本（仅标准库即可运行） |
+| MCP Token | 在 [open.mcd.cn/mcp](https://open.mcd.cn/mcp) 免费申请（中国大陆手机号验证） |
+| 网络 | 可访问 `https://mcp.mcd.cn`（麦当劳 MCP 服务，限中国大陆） |
+| MCP 客户端 | 可选（WorkBuddy / Cursor / Claude Code / Codex 等，仅方式一、二需要） |
+| 限流 | 每个 Token 每分钟最多 600 次请求 |
+
+## 安装步骤
+
+四种方式按需选择：方式一/二面向 Agent 对话场景，方式三适合脚本与自动化调试，
+方式四为可选的省钱增强。所有方式都依赖下方申请的 MCP Token。
 
 ### 申请 MCP Token
 
@@ -164,34 +217,10 @@ maimai-saver/
 ### 方式一：MCP 客户端直连
 
 将 [`config/mcp.example.json`](config/mcp.example.json) 中的 `${MCD_MCP_TOKEN}`
-替换为实际 Token，写入你的 MCP 客户端配置：
+替换为实际 Token，粘贴到 MCP 客户端并启用 `mcd-mcp` 服务；各客户端的配置
+位置见[配置说明](#配置说明)。接入后客户端自动暴露全部 35 个工具。
 
-| 客户端 | 配置位置 |
-|---|---|
-| WorkBuddy | `~/.workbuddy/mcp.json` |
-| Cursor | 设置 → Tools & MCP → mcp.json |
-| Cherry Studio / Trae / VSCode / Kiro | 各自 MCP 设置页（JSON 导入） |
-
-### 方式二：独立 CLI
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git
-cd maimai-saver
-
-# 提供 Token（三选一）
-export MCD_MCP_TOKEN="你的Token"          # 环境变量（推荐）
-echo "你的Token" > ~/.mcd_mcp_token        # 或 Token 文件
-# 或每次调用时 --token "你的Token"
-
-python scripts/mcd.py check                # 验证 Token 与连通性
-python scripts/mcd.py tools                # 列出全部 35 个工具
-python scripts/mcd.py schema query-meals   # 查看工具入参 Schema
-python scripts/mcd.py call available-coupons   # 试试查可领的麦麦省券
-```
-
-**CLI 退出码**：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
-
-### 方式三：作为各平台 Agent Skill 安装
+### 方式二：Agent Skill 安装
 
 本技能遵循开放的 Agent Skills 标准（SKILL.md），同一仓库可直接安装到
 WorkBuddy、Claude Code、Cursor、OpenAI Codex：
@@ -208,9 +237,31 @@ git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai
 # Cursor: ~/.cursor/skills/ · Codex: ~/.agents/skills/ · WorkBuddy: ~/.workbuddy/skills/
 ```
 
-> 安装技能后，仍需按[方式一](#方式一mcp-客户端直连)配置 `mcd-mcp` MCP 连接，
-> 技能才能调用真实工具。各平台详细步骤（含验证方法与 MCP 配置位置）见
-> [`references/agent-skill-installation.md`](references/agent-skill-installation.md)。
+安装技能后仍需按[方式一](#方式一mcp-客户端直连)配置 `mcd-mcp` MCP 连接，
+技能才能调用真实工具。各平台详细步骤见
+[`references/agent-skill-installation.md`](references/agent-skill-installation.md)。
+
+安装完成后 Agent 将依据 `SKILL.md` 的触发词与工作流自动调用，并遵守四条规范：
+
+1. **先查后改**：所有写操作前必须先完成查询，上下文齐备。
+2. **下单必确认**：任何下单/取消/兑换/抽奖操作前，必须向用户展示关键信息并获得
+   明确确认；支付链接仅原样转交，由用户自行支付。
+3. **省钱必检查**：下单前执行"领券→选券→比价→积分抵扣评估"四步检查，报价附带省钱明细。
+4. **不虚构优惠**：每一笔优惠金额必须来自 `calculate-price` 等工具的实际返回值。
+
+### 方式三：CLI 独立使用
+
+```bash
+git clone https://github.com/yuxinlaile/maimai-saver.git
+cd maimai-saver
+
+# 提供 Token（三选一）
+export MCD_MCP_TOKEN="你的Token"          # 环境变量（推荐）
+echo "你的Token" > ~/.mcd_mcp_token        # 或 Token 文件
+# 或每次调用时 --token "你的Token"
+
+python scripts/mcd.py check                # 验证 Token 与连通性
+```
 
 ### 方式四：全渠道比价
 
@@ -226,61 +277,138 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 ```
 
 > 比价结果为本地估算（团购平台无公开 API，数据手动录入），方法论见
-> [`references/group-buy-comparison.md`](references/group-buy-comparison.md)。
+> [`references/group-buy-comparison.md`](references/group-buy-comparison.md)；
+> 数据层支持 `MAIMAI_DEALS_PROVIDER` 环境变量接入外部数据源，为未来官方
+> API 预留自动化接入点。
 
-## 工具能力总览（35 个）
+## 运行与命令
 
-| 业务域 | 工具 |
+### mcd.py（官方 MCP 工具调用）
+
+```bash
+python scripts/mcd.py check                  # 检查 Token 有效性与服务器连通性
+python scripts/mcd.py tools                  # 列出全部 35 个工具
+python scripts/mcd.py schema query-meals     # 查看指定工具的入参 JSON Schema
+python scripts/mcd.py call query-nearby-stores --arg address="北京市朝阳区xx路"   # 键值对传参
+python scripts/mcd.py call query-meals --args '{"storeCode": "..."}' --raw      # 整体 JSON + 原始输出
+```
+
+**CLI 退出码**：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
+
+全局选项：`--token`、`--url`、`--timeout`（默认 30s）、`--retries`（默认 3）、
+`--verbose`，子命令前后均可使用。
+
+### deal_compare.py（全渠道比价）
+
+```bash
+python scripts/deal_compare.py add ...       # 录入团购券
+python scripts/deal_compare.py list          # 列出券库（含有效期检查）
+python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
+```
+
+退出码：`0` 成功 · `1` 用法/数据错误 · `2` 券库为空。
+
+## 配置说明
+
+### 配置文件
+
+| 文件 | 用途 |
 |---|---|
-| 营养健康 | `list-nutrition-foods` |
-| 地址与门店 | `delivery-query-addresses` `delivery-create-address` `delivery-query-stores` `query-nearby-stores` `query-meal-assistance` |
-| 菜单与价格 | `query-meals` `query-meal-detail` `calculate-price` `query-promotions` |
-| 点餐与订单 | `create-order` `cancel-order` `query-order` `order-list` `query-survey-coupon` |
-| 优惠券 | `query-store-coupons` `available-coupons` `auto-bind-coupons` `query-my-coupons` |
-| 积分与商城 | `query-my-account` `mall-points-products` `mall-product-detail` `mall-create-order` `mall-order-list` `mall-order-detail` |
-| 积分抽奖 | `query-lottery-info` `draw-lottery` `query-my-prizes` |
-| 主题活动 | `query-party-city` `query-party-store` `query-partystore-date` `query-partystore-session` `party-order-create` |
-| 辅助 | `now-time-info` `campaign-calendar` |
+| `config/mcp.example.json` | MCP 客户端接入模板（`${MCD_MCP_TOKEN}` 环境变量占位符） |
+| `mcp-config.example.json` | 仓库根目录脱敏配置（参赛要求文件，仅环境变量占位符） |
 
-完整说明与使用要点见 [`references/tools.md`](references/tools.md)。
+### 环境变量
 
-## 作为 Agent Skill 使用
-
-安装步骤见[方式三](#方式三作为各平台-agent-skill-安装)。安装完成后，Agent 将依据 `SKILL.md` 中的触发词与工作流自动调用。技能内置四条规范，确保 Agent 行为可控且省钱可验证：
-
-1. **先查后改**：所有写操作前必须先完成查询，上下文齐备。
-2. **下单必确认**：任何下单/取消/兑换/抽奖操作前，必须向用户展示关键信息并获得明确确认；支付链接仅原样转交，由用户自行支付。
-3. **省钱必检查**：下单前执行"领券→选券→比价→积分抵扣评估"四步检查，报价附带省钱明细。
-4. **不虚构优惠**：每一笔优惠金额必须来自 `calculate-price` 等工具的实际返回值。
-
-## 错误处理
-
-| 场景 | 行为 |
+| 变量 | 说明 |
 |---|---|
-| HTTP 401 | 抛出 `AuthError`，提示重新申请 Token，不重试 |
-| HTTP 429 | 指数退避 + 抖动自动重试（默认 3 次），尊重 `Retry-After` |
-| HTTP 5xx / 网络错误 | 自动重试（默认 3 次） |
-| 工具业务错误 | 抛出 `McpToolError`（含原始数据），建议用 `schema` 核对参数后修正 |
+| `MCD_MCP_TOKEN` | MCP Token（优先级最高的提供方式） |
+| `MCD_MCP_TOKEN_FILE` | Token 文件路径，默认 `~/.mcd_mcp_token` |
+| `MCD_MCP_URL` | MCP Server 地址，默认 `https://mcp.mcd.cn` |
+| `MAIMAI_DEALS_FILE` | 团购券库路径，默认 `~/.maimai_saver/deals.json` |
+| `MAIMAI_DEALS_PROVIDER` | 外部数据源模块路径（实现 `load_deals()`），可选 |
 
-详见 [`references/error-handling.md`](references/error-handling.md)。
+### MCP 客户端配置位置
 
-## 开发与测试
+| 客户端 | 配置位置 |
+|---|---|
+| WorkBuddy | `~/.workbuddy/mcp.json`（或连接器管理页手动配置） |
+| Cursor | 设置 → Tools & MCP → mcp.json |
+| Cherry Studio / Trae / VSCode / Kiro | 各自 MCP 设置页（JSON 导入） |
+| OpenAI Codex | `~/.codex/config.toml` 的 `[mcp_servers.mcd-mcp]` 段 |
+
+### Token 安全要点
+
+Token 仅通过环境变量、Token 文件或 `--token` 参数提供；绝不写入仓库文件、
+绝不出现在日志与异常信息中；如不慎泄露，立即到 open.mcd.cn/mcp 重新申请。
+
+## 常见问题
+
+**Q1：调用报 401 鉴权失败？**
+Token 无效、过期或未提供。检查 `MCD_MCP_TOKEN` / Token 文件 / `--token` 是否
+正确，必要时到 <https://open.mcd.cn/mcp> 控制台重新申请。401 不会自动重试。
+
+**Q2：频繁触发 429 限流？**
+每个 Token 每分钟最多 600 次请求。CLI 已内置指数退避自动重试（尊重
+Retry-After）；仍失败请降低调用频率，检查是否存在对 `query-meal-detail` 等
+工具的循环逐个调用。
+
+**Q3：`tools` 列表为空？**
+先用 `python scripts/mcd.py check` 验证 Token 与连通性；确认 `--url` /
+`MCD_MCP_URL` 未被改错。
+
+**Q4：工具调用报参数错误（McpToolError）？**
+不要猜参数名：执行 `python scripts/mcd.py schema <tool>` 查看权威入参；
+编码类参数（storeCode、餐品编码、couponId 等）必须原样透传前序工具的返回值。
+
+**Q5：网络错误或“无法解析的响应体”？**
+网络错误会自动重试（默认 3 次）；持续出现请检查本地网络与代理，并按
+[`references/error-handling.md`](references/error-handling.md) 的清单提 Issue
+（请勿附 Token）。
+
+**Q6：团购比价的数据从哪里来？**
+美团/抖音无面向第三方的公开 API，券信息由你手动录入本地券库；比价结果为
+估算值，实际以各平台页面为准。外部数据源可通过 `MAIMAI_DEALS_PROVIDER` 接入。
+
+**Q7：支持哪些 Agent？**
+WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改），
+安装目录见[方式二](#方式二agent-skill-安装)。
+
+**Q8：如何确认技能安装成功？**
+新开 Agent 会话输入显式调用命令（如 `/maimai-saver`）确认技能被识别；再执行
+`python scripts/mcd.py check` 验证 MCP 连通性。
+
+**Q9：麦当劳 MCP 的使用限制？**
+仅限中国大陆地区（不含港澳台）、个人非商业用途；须遵守麦当劳中国《使用条款》
+与《麦当劳 MCP 服务规则》，详见[免责声明](#免责声明)。
+
+## 测试方式
 
 ```bash
 # 语法检查（与 CI 一致）
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# 单元测试（43 个用例，不发起网络请求）
-pip install pytest
+# 安装开发依赖并运行单元测试（49 个用例，不发起网络请求）
+pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
 
-CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行上述检查。
+CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检查与单元测试
+（Python 3.9 / 3.11 / 3.13 矩阵）。
 
-## 贡献
+## 贡献指南
 
 欢迎通过 Issue / PR 参与：工作流文档、中英文档校对、工具目录更新
 （麦当劳 MCP 版本迭代较快，以 `tools` 子命令的实时结果为准）。
+
+- Issue 模板：Bug 报告、功能建议（`.github/ISSUE_TEMPLATE/`）
+- PR 模板：`.github/PULL_REQUEST_TEMPLATE.md`（含自检清单）
+
+提交前请确认：
+
+1. `python -m pytest tests/` 全部通过；
+2. 未包含任何真实 Token、密码或个人凭证；
+3. 涉及工具目录/工作流的变更已同步更新 `references/` 与 `SKILL.md`；
+4. 用户可见变更已在 `CHANGELOG.md` 补充说明。
 
 ## 许可证
 
