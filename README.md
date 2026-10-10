@@ -15,11 +15,7 @@
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
-简体中文 · [English](README_EN.md)*
-
 </div>
-
-> \* 英文版可按本文结构自行翻译贡献，欢迎 PR。
 
 ---
 
@@ -101,7 +97,7 @@ maimai-saver/
 
 ### 第 2 步（方式 A）：MCP 客户端直连
 
-将 [`config/mcp.example.json`](config/mcp.example.json) 中的 `YOUR_MCP_TOKEN`
+将 [`config/mcp.example.json`](config/mcp.example.json) 中的 `${MCD_MCP_TOKEN}`
 替换为实际 Token，写入你的 MCP 客户端配置：
 
 | 客户端 | 配置位置 |

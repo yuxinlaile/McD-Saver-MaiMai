@@ -174,7 +174,7 @@ query-my-account → mall-points-products → mall-product-detail
 ```
 
 更多流程（团餐、营养咨询、活动日历等）与分支处理见 `references/workflows.md`；
-十大省钱策略详解见 `references/money-saving-strategies.md`。
+十一大省钱策略详解见 `references/money-saving-strategies.md`。
 
 ## 调用规范（必须遵守）
 

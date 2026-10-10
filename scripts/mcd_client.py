@@ -66,7 +66,7 @@ DEFAULT_TOKEN_FILE = "~/.mcd_mcp_token"
 PROTOCOL_VERSION = "2025-03-26"
 
 CLIENT_INFO = {"name": "maimai-saver", "version": "1.1.0"}
-USER_AGENT = "maimai-saver/1.1.0 (+https://github.com/)"
+USER_AGENT = "maimai-saver/1.1.0"
 
 
 # ---------------------------------------------------------------------------

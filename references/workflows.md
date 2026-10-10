@@ -16,7 +16,7 @@
 [5]（可选）deal_compare.py compare                     # 结合用户录入的团购券做全渠道比价
 ```
 
-十大官方渠道策略详解见 `money-saving-strategies.md`（含策略 11 全渠道比价）；
+十一大策略详解见 `money-saving-strategies.md`（含策略 11 全渠道比价）；
 团购比价口径见 `group-buy-comparison.md`。以下各点餐工作流中的
 "[省钱检查]"均指本流程。
 
