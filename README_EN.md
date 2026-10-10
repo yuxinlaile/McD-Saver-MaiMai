@@ -2,6 +2,8 @@
 
 # 🍟 MaiMai Saver (麦麦省钱助手)
 
+<img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
+
 **Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
 Built on McDonald's China official MCP Server (integration guide:
@@ -96,13 +98,15 @@ maimai-saver/
 ├── references/
 │   ├── tools.md                        # Catalog of all 35 tools
 │   ├── money-saving-strategies.md      # 11 saving strategies (core reference)
+│   ├── agent-skill-installation.md     # WorkBuddy/Claude Code/Cursor/Codex install guide
 │   ├── group-buy-comparison.md         # Cross-channel comparison methodology
 │   ├── workflows.md                    # Business workflows
 │   └── error-handling.md               # Errors, retries & troubleshooting
 ├── examples/
 │   └── order-flow-example.md           # Full annotated ordering session
+├── docs/assets/                        # README preview images (SVG)
 ├── tests/                              # pytest unit tests (43 cases)
-└── .github/workflows/ci.yml            # CI: syntax check + tests
+└── .github/                            # CI + Issue/PR templates
 ```
 
 ## 🚀 Quick start
@@ -140,7 +144,27 @@ python scripts/mcd.py call available-coupons   # try listing claimable coupons
 
 **CLI exit codes**: `0` ok · `1` tool error · `2` auth · `3` rate-limited · `4` network
 
-### Step 3 (optional): cross-channel comparison
+### Step 3 (optional): install as an Agent Skill
+
+The repo follows the open Agent Skills standard (SKILL.md) and installs as-is
+into WorkBuddy, Claude Code, Cursor and OpenAI Codex:
+
+| Platform | Project scope | User scope | Explicit invoke |
+|---|---|---|---|
+| WorkBuddy | `.workbuddy/skills/` | `~/.workbuddy/skills/` | auto-triggered |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` | `/maimai-saver` |
+| Cursor | `.cursor/skills/`, `.agents/skills/` | `~/.cursor/skills/`, `~/.agents/skills/` | `/maimai-saver` |
+| OpenAI Codex | `.agents/skills/` | `~/.agents/skills/` | `$maimai-saver`, `/skills` |
+
+```bash
+git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver
+# Cursor: ~/.cursor/skills/ · Codex: ~/.agents/skills/ · WorkBuddy: ~/.workbuddy/skills/
+```
+
+> The skill still needs the `mcd-mcp` MCP connection from step 2 to call real
+> tools. Per-platform details: [`references/agent-skill-installation.md`](references/agent-skill-installation.md).
+
+### Step 4 (optional): cross-channel comparison
 
 ```bash
 # Record a McDonald's group-buy deal you found on Meituan/Douyin
@@ -158,21 +182,11 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 
 ## 🖥️ Sample output
 
-```text
-========================================================================
-麦麦省钱助手 · 全渠道比价报告（生成日期: 2026-10-10）
-========================================================================
-官方渠道方案：商品合计原价 ¥48.50，MCP 带券最优实付 ¥38.50（折扣率 79.4%）
+Cross-channel comparison report (`deal_compare.py compare`):
 
-团购券比价（按估算到手价升序，所有金额均为估算值）：
-  [81bb4c] meituan | 麦当劳满40减14代金券
-      售价 ¥25.90 / 面值 ¥40.00 = 折扣率 64.8% | 同内容估算到手 ¥31.40 | 对比官方 +7.10 元
-      限制: 仅堂食核销；限时段使用；2026-11-30前有效；每日限用1张
-
-推荐决策（估算，实际以各平台页面与麦当劳官方渠道为准）：
-  ✔ 建议使用团购券：麦当劳满40减14代金券（meituan）
-    估算到手 ¥31.40，较官方渠道方案节省约 ¥7.10。
-```
+<div align="center">
+<img src="docs/assets/compare-report.svg" alt="Cross-channel comparison report sample" width="720" />
+</div>
 
 ## 🤖 Use as an Agent Skill
 

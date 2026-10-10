@@ -13,6 +13,10 @@
   `MAIMAI_DEALS_PROVIDER` 指定外部数据源模块（需实现 `load_deals()`），
   为团购平台未来开放官方 API 预留自动化接入点，失败自动回退本地券库
 - 英文说明文档 `README_EN.md`、版本变更记录 `CHANGELOG.md`
+- 各主流 Agent 安装指南 `references/agent-skill-installation.md`
+  （WorkBuddy / Claude Code / Cursor / OpenAI Codex，基于开放 Agent Skills 标准）
+- README 效果预览：横幅与比价报告图（`docs/assets/*.svg`）
+- GitHub Issue 模板（Bug 报告 / 功能建议）与 PR 模板（含自检清单）
 
 ### Changed
 - 仓库内容清理：`workbuddy.md` 由占位模板改为真实开发对话上下文记录

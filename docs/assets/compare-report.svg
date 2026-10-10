@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="532" viewBox="0 0 880 532" role="img" aria-label="deal_compare compare 命令输出示例">
+  <rect width="880" height="532" rx="12" fill="#1e1e2e"/>
+  <rect width="880" height="40" rx="12" fill="#181825"/>
+  <rect y="28" width="880" height="12" fill="#181825"/>
+  <circle cx="24" cy="20" r="6" fill="#f38ba8"/>
+  <circle cx="44" cy="20" r="6" fill="#f9e2af"/>
+  <circle cx="64" cy="20" r="6" fill="#a6e3a1"/>
+  <text x="440" y="25" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#a6adc8">maimai-saver — deal_compare</text>
+
+  <g font-family="ui-monospace, Consolas, 'Courier New', monospace" font-size="13" fill="#cdd6f4">
+    <text x="24" y="66" fill="#a6e3a1">$ <tspan fill="#cdd6f4">python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5</tspan></text>
+    <text x="24" y="90" fill="#585b70">========================================================================</text>
+    <text x="24" y="112" fill="#89b4fa">麦麦省钱助手 · 全渠道比价报告（生成日期: 2026-10-10）</text>
+    <text x="24" y="134" fill="#585b70">========================================================================</text>
+    <text x="24" y="156">官方渠道方案：商品合计原价 <tspan fill="#f9e2af">¥48.50</tspan>，MCP 带券最优实付 <tspan fill="#f9e2af">¥38.50</tspan>（折扣率 79.4%）</text>
+    <text x="24" y="188">团购券比价（按估算到手价升序，所有金额均为估算值）：</text>
+    <text x="24" y="210" fill="#585b70">------------------------------------------------------------------------</text>
+    <text x="24" y="234">  <tspan fill="#cba6f7">[81bb4c]</tspan> meituan | 麦当劳满40减14代金券</text>
+    <text x="24" y="257">      售价 ¥25.90 / 面值 ¥40.00 = 折扣率 64.8% | 同内容估算到手 <tspan fill="#a6e3a1">¥31.40</tspan> | 对比官方 +7.10 元</text>
+    <text x="24" y="280" fill="#9399b2">      限制: 仅堂食核销；限时段使用；2026-11-30前有效；每日限用1张</text>
+    <text x="24" y="304">  <tspan fill="#cba6f7">[39f90f]</tspan> douyin | 巨无霸中套餐单次券</text>
+    <text x="24" y="327">      售价 ¥29.90 / 面值 ¥41.00 = 折扣率 72.9% | 同内容估算到手 <tspan fill="#a6e3a1">¥35.37</tspan> | 对比官方 +3.13 元</text>
+    <text x="24" y="350" fill="#9399b2">      限制: 仅堂食核销；2026-12-31前有效</text>
+    <text x="24" y="373" fill="#585b70">------------------------------------------------------------------------</text>
+    <text x="24" y="405">推荐决策（估算，实际以各平台页面与麦当劳官方渠道为准）：</text>
+    <text x="24" y="428" fill="#a6e3a1">  ✔ 建议使用团购券：麦当劳满40减14代金券（meituan）</text>
+    <text x="24" y="451">    估算到手 <tspan fill="#f9e2af">¥31.40</tspan>，较官方渠道方案节省约 ¥7.10。</text>
+    <text x="24" y="474" fill="#9399b2">    注意：团购券通常不可叠加官方优惠券，需在适用门店/时段内核销。</text>
+    <text x="24" y="506" fill="#6c7086">免责声明：本报告由本地录入数据估算生成，不与任何团购平台实时对接；</text>
+    <text x="24" y="522" fill="#6c7086">价格、库存与规则请以美团/抖音/麦当劳官方页面实时信息为准。</text>
+  </g>
+</svg>

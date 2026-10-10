@@ -2,6 +2,8 @@
 
 # 🍟 麦麦省钱助手 (MaiMai Saver)
 
+<img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
+
 **让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
 
 基于麦当劳中国官方 MCP Server（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server) 集成指南）构建，
@@ -55,7 +57,11 @@
 
 ## 🖥️ 效果预览
 
-全渠道比价报告（`deal_compare.py compare` 实际输出示例）：
+全渠道比价报告（`deal_compare.py compare` 实际输出）：
+
+<div align="center">
+<img src="docs/assets/compare-report.svg" alt="全渠道比价报告输出示例" width="720" />
+</div>
 
 ```text
 ========================================================================
@@ -109,13 +115,15 @@ maimai-saver/
 ├── references/
 │   ├── tools.md                        # 35 个工具完整目录
 │   ├── money-saving-strategies.md      # 十一大省钱策略详解（核心参考）
+│   ├── agent-skill-installation.md     # WorkBuddy/Claude Code/Cursor/Codex 安装指南
 │   ├── group-buy-comparison.md         # 外部团购比价方法论
 │   ├── workflows.md                    # 业务工作流详解（含省钱检查前置流程）
 │   └── error-handling.md               # 错误处理与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 完整省钱点餐示例会话
+├── docs/assets/                        # README 预览图（SVG）
 ├── tests/                              # pytest 单元测试（43 个用例）
-└── .github/workflows/ci.yml            # CI：语法检查 + 单元测试
+└── .github/                            # CI + Issue/PR 模板
 ```
 
 ## 🚀 快速开始
@@ -155,7 +163,28 @@ python scripts/mcd.py call available-coupons   # 试试查可领的麦麦省券
 
 **CLI 退出码**：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
 
-### 第 3 步（可选）：全渠道比价（美团/抖音团购券）
+### 第 3 步（可选）：作为各平台 Agent Skill 安装
+
+本技能遵循开放的 Agent Skills 标准（SKILL.md），同一仓库可直接安装到
+WorkBuddy、Claude Code、Cursor、OpenAI Codex：
+
+| 平台 | 项目级 | 用户级 | 显式调用 |
+|---|---|---|---|
+| WorkBuddy | `.workbuddy/skills/` | `~/.workbuddy/skills/` | 需求自动触发 |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` | `/maimai-saver` |
+| Cursor | `.cursor/skills/`、`.agents/skills/` | `~/.cursor/skills/`、`~/.agents/skills/` | `/maimai-saver` |
+| OpenAI Codex | `.agents/skills/` | `~/.agents/skills/` | `$maimai-saver`、`/skills` |
+
+```bash
+git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver
+# Cursor: ~/.cursor/skills/ · Codex: ~/.agents/skills/ · WorkBuddy: ~/.workbuddy/skills/
+```
+
+> 安装技能后，仍需按第 2 步配置 `mcd-mcp` MCP 连接，技能才能调用真实工具。
+> 各平台详细步骤（含验证方法与 MCP 配置位置）见
+> [`references/agent-skill-installation.md`](references/agent-skill-installation.md)。
+
+### 第 4 步（可选）：全渠道比价（美团/抖音团购券）
 
 ```bash
 # 把你在美团/抖音查到的麦当劳团购券录入本地券库

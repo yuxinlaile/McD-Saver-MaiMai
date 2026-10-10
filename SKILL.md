@@ -14,6 +14,15 @@ Streamable HTTP 协议）为用户提供**以省钱为核心目标**的点餐、
 而是**帮用户用最少的钱吃到同样的餐**。每一次报价都必须附带省钱明细
 （原价、优惠、实付、节省金额）。
 
+## Agent 兼容性
+
+本技能遵循开放的 Agent Skills 标准（SKILL.md + 目录结构），同一份文件可在
+WorkBuddy（`~/.workbuddy/skills/`）、Claude Code（`~/.claude/skills/` 或
+`.claude/skills/`）、Cursor（`.cursor/skills/` 或 `~/.cursor/skills/`，
+兼容 `.agents/skills/`）、OpenAI Codex（`.agents/skills/` 或
+`~/.agents/skills/`）直接安装。各平台安装步骤、显式调用方式（`/maimai-saver`
+或 `$maimai-saver`）与 MCP 配置位置见 `references/agent-skill-installation.md`。
+
 > ⚠️ 本技能为社区开源项目，与麦当劳公司无关联、无官方背书。
 > 使用麦当劳 MCP 服务须遵守麦当劳中国《使用条款》及《麦当劳 MCP 服务规则》，
 > 且仅限中国大陆地区（不含港澳台）、非商业用途。
