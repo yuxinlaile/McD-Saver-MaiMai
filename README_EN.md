@@ -155,6 +155,11 @@ Full catalog and usage notes: [`references/tools.md`](references/tools.md).
 
 Try it online (no sign-in): <https://yuxinlaile.github.io/maimai-saver/demo.html>
 
+The demo page ships with 31 menu items (7 categories, incl. breakfast), 9 coupons,
+6 Meituan/Douyin group-buy deals, a cross-channel final recommendation, and
+**one-click real-menu import** — paste the raw MCP `get-menu` output to replace
+the sample data wholesale, the compliant way to sync the full official menu.
+
 Coupon combination optimization (`optimizer.py`):
 
 <div align="center">
