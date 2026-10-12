@@ -9,6 +9,7 @@
     --red:#c2410c; --red-deep:#9a3412; --amber:#f59e0b;
     --bg:#fff7ed; --card:#ffffff; --text:#292524; --muted:#78716c;
     --line:#e7e5e4; --green:#16a34a; --green-bg:#f0fdf4; --warn-bg:#fffbeb;
+    --violet:#7c3aed; --violet-bg:#f5f3ff;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
@@ -56,6 +57,14 @@
   .coupons { font-size:13px; line-height:2; }
   .coupons .tag { display:inline-block; background:#fff5ec; border:1px solid #fed7aa;
                   color:var(--red-deep); border-radius:6px; padding:1px 8px; margin:2px 4px 2px 0; font-size:12px; }
+  .deals { font-size:12.5px; }
+  .deal { display:flex; justify-content:space-between; gap:8px; border:1px solid var(--line);
+          border-radius:8px; padding:7px 10px; margin-bottom:6px; }
+  .deal .t { flex:1; min-width:0; }
+  .deal .plat { display:inline-block; font-size:11px; border-radius:4px; padding:0 5px; color:#fff; margin-right:4px; }
+  .plat.meituan { background:#ffc300; color:#5b4500; }
+  .plat.douyin { background:#111; }
+  .deal .rate { color:var(--red); font-weight:bold; white-space:nowrap; }
   .sticky { position:sticky; top:16px; }
   .actions { display:flex; gap:10px; margin-bottom:14px; }
   button.calc { flex:1; padding:12px; font-size:15px; font-weight:bold; color:#fff;
@@ -72,10 +81,12 @@
   .plan { border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:10px; font-size:13px;
           transition:border-color .15s; }
   .plan.best { border:1.5px solid var(--green); background:var(--green-bg); }
+  .plan.final { border:1.5px solid var(--violet); background:var(--violet-bg); }
   .plan .head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
   .plan .label { font-weight:bold; font-size:14px; }
   .plan .pay { font-size:16px; font-weight:800; color:var(--red); }
   .plan .best-tag { color:var(--green); font-size:12px; font-weight:bold; margin-left:6px; }
+  .plan .final-tag { color:var(--violet); font-size:12px; font-weight:bold; margin-left:6px; }
   .plan .detail { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .plan .save { color:var(--green); font-size:12px; font-weight:bold; }
   .warn { margin-top:8px; background:var(--warn-bg); border:1px solid #fde68a;
@@ -98,7 +109,7 @@
 <div class="wrap">
   <header>
     <div class="brand">🍟 麦麦省钱助手 · 在线试算</div>
-    <div class="sub">券组合优化算法前端复刻 —— 选好想吃的，一键算出最优方案与凑单陷阱</div>
+    <div class="sub">券组合优化 + 团购比价 算法前端复刻 —— 官方最优 vs 团购估算，一次算清</div>
   </header>
 
   <div class="layout">
@@ -110,31 +121,37 @@
         </div>
         <div class="toolbar" id="chips"></div>
         <div id="menu"></div>
-        <div class="notice">示例菜单覆盖麦当劳 App 主流单品与套餐（约 22 项，价格为 2026-10 参考价）；
+        <div class="notice">示例菜单覆盖麦当劳 App 主流单品与套餐（31 项，价格为 2026-10 参考价）；
           实时全量菜单与准确价格需 MCP Token 走官方 <code>query-meals</code> 获取。</div>
       </div>
       <div class="card">
         <h2>② 可用券<span class="hint">自动参与组合优化</span></h2>
         <div id="coupons" class="coupons"></div>
       </div>
+      <div class="card">
+        <h2>③ 团购券（美团/抖音 · 示例）<span class="hint">同内容折算口径</span></h2>
+        <div id="deals" class="deals"></div>
+        <div class="notice">折算口径与仓库 <code>deal_compare.py</code> 一致：估算到手价 =
+          当前购物车原价 ×（团购售价 ÷ 券面值）。团购券内容固定，能否覆盖你的购物车以平台券详情页为准。</div>
+      </div>
     </div>
 
     <div class="sticky">
       <div class="card">
-        <h2>③ 优化结果</h2>
+        <h2>④ 优化结果</h2>
         <div class="actions">
           <button class="calc" onclick="calc()">🧮 计算最优方案</button>
           <button class="share" onclick="share()" title="复制本页链接">🔗</button>
           <button class="reset" onclick="reset()">重置</button>
         </div>
         <div id="baseline"></div>
-        <div id="result"><div class="empty">选好想吃的餐品后点击「计算最优方案」<br>凑单方案会自动标注陷阱提示</div></div>
+        <div id="result"><div class="empty">选好想吃的餐品后点击「计算最优方案」<br>自动对比官方券组合与团购估算</div></div>
       </div>
     </div>
   </div>
 
   <footer>
-    示例数据仅用于演示算法，实时菜单/价格/优惠以麦当劳官方 App 与 MCP 工具返回为准。<br>
+    示例数据仅用于演示算法，实时菜单/价格/优惠以麦当劳官方 App 与 MCP 工具返回为准；团购价格来自示例录入，以各平台页面为准。<br>
     本页为 <a href="https://github.com/yuxinlaile/maimai-saver">maimai-saver</a> 项目的静态演示，
     社区开源项目，与麦当劳公司无关联。
   </footer>
@@ -152,6 +169,7 @@ const MENU = [
   {mealCode:"H4", name:"双层吉士汉堡", price:17.0, category:"汉堡"},
   {mealCode:"H5", name:"麦香鱼", price:15.0, category:"汉堡"},
   {mealCode:"H6", name:"不素之霸双层牛堡", price:23.0, category:"汉堡"},
+  {mealCode:"H7", name:"麦香鸡", price:11.0, category:"汉堡"},
   // 小食
   {mealCode:"S1", name:"中薯条", price:12.0, category:"小食"},
   {mealCode:"S2", name:"大薯条", price:15.0, category:"小食"},
@@ -164,29 +182,52 @@ const MENU = [
   {mealCode:"D2", name:"中零度可乐", price:9.5, category:"饮品"},
   {mealCode:"D3", name:"中杯冰美式", price:13.0, category:"饮品"},
   {mealCode:"D4", name:"中杯鲜煮咖啡", price:10.5, category:"饮品"},
+  {mealCode:"D5", name:"中杯拿铁(McCafé)", price:17.0, category:"饮品"},
   // 甜品
   {mealCode:"T1", name:"麦旋风(奥利奥)", price:13.5, category:"甜品"},
   {mealCode:"T2", name:"圆筒冰淇淋", price:5.0, category:"甜品"},
   {mealCode:"T3", name:"草莓圣代", price:11.0, category:"甜品"},
   {mealCode:"T4", name:"香芋派", price:7.5, category:"甜品"},
+  // 早餐
+  {mealCode:"B1", name:"猪柳蛋麦满分", price:13.5, category:"早餐"},
+  {mealCode:"B2", name:"热香饼(2块)", price:9.0, category:"早餐"},
   // 套餐与随心配
-  {mealCode:"M1", name:"麦辣鸡腿堡三件套(堡+中薯+中可)", price:33.5, category:"套餐"},
-  {mealCode:"M2", name:"巨无霸中套餐(堡+中薯+中可)", price:39.5, category:"套餐"},
-  {mealCode:"M3", name:"板烧鸡腿堡中套餐(堡+中薯+中可)", price:41.0, category:"套餐"},
-  {mealCode:"M4", name:"双层吉士中套餐(堡+中薯+中可)", price:34.0, category:"套餐"},
+  {mealCode:"M1", name:"麦辣鸡腿堡三件套(堡+中薯+中可)", price:33.5, category:"套餐",
+   contains:["H2","S1","D1"]},
+  {mealCode:"M2", name:"巨无霸中套餐(堡+中薯+中可)", price:39.5, category:"套餐",
+   contains:["H1","S1","D1"]},
+  {mealCode:"M3", name:"板烧鸡腿堡中套餐(堡+中薯+中可)", price:41.0, category:"套餐",
+   contains:["H3","S1","D1"]},
+  {mealCode:"M4", name:"双层吉士中套餐(堡+中薯+中可)", price:34.0, category:"套餐",
+   contains:["H4","S1","D1"]},
   {mealCode:"M5", name:"1+1随心配(汉堡区+饮品区任选)", price:13.5, category:"套餐"},
+  {mealCode:"M6", name:"巨无霸大套餐(堡+大薯+中可)", price:45.5, category:"套餐",
+   contains:["H1","S2","D1"]},
+  {mealCode:"M7", name:"早餐组合(猪柳蛋麦满分+鲜煮咖啡)", price:17.5, category:"套餐",
+   contains:["B1","D4"]},
 ];
 const COUPONS = [
-  {couponId:"C1", title:"满20减4", threshold:20, discount:4},
-  {couponId:"C2", title:"满30减6", threshold:30, discount:6},
-  {couponId:"C3", title:"满40减10", threshold:40, discount:10},
-  {couponId:"C4", title:"满50减15", threshold:50, discount:15},
-  {couponId:"C5", title:"到店取餐9折券", threshold:0, discount:0},
+  {couponId:"C1", title:"满15减2", threshold:15, discount:2},
+  {couponId:"C2", title:"满20减4", threshold:20, discount:4},
+  {couponId:"C3", title:"满30减6", threshold:30, discount:6},
+  {couponId:"C4", title:"满40减10", threshold:40, discount:10},
+  {couponId:"C5", title:"满50减15", threshold:50, discount:15},
+  {couponId:"C6", title:"满60减20", threshold:60, discount:20},
+  {couponId:"C7", title:"无门槛立减3元", threshold:0, discount:3},
+  {couponId:"C8", title:"新客立减5元", threshold:0, discount:5},
+  {couponId:"C9", title:"到店取餐9折券", threshold:0, discount:-1},
+];
+// 团购券示例（美团/抖音常见形态，同内容折算口径：est = 购物车原价 × 售价/面值）
+const DEALS = [
+  {platform:"meituan", title:"巨无霸中套餐单次券", price:29.9, face:41.0},
+  {platform:"meituan", title:"满40减14代金券", price:25.9, face:40.0},
+  {platform:"meituan", title:"双人餐 A 套券", price:69.9, face:98.0},
+  {platform:"douyin",  title:"麦辣鸡腿堡三件套单次券", price:24.9, face:33.5},
+  {platform:"douyin",  title:"随心配 1+1 团购券", price:9.9, face:13.5},
+  {platform:"douyin",  title:"甜品第二件半价券", price:6.9, face:13.5},
 ];
 const ADDON_LIMIT = 3;
 const ADDON_HINT = "仅当你本来就需要该商品才划算";
-// 9 折券的折扣按 10% 面值近似（示例数据中的简化处理）
-COUPONS.find(c => c.couponId === "C5").discount = -1; // 负数标记 → 9 折特殊处理
 
 // ---- 渲染菜单（分类 chips + 搜索 + 分组）----
 const menuEl = document.getElementById("menu");
@@ -195,6 +236,8 @@ const searchEl = document.getElementById("search");
 const categories = [...new Set(MENU.map(m => m.category))];
 let activeCat = "全部";
 let keyword = "";
+const state = {};
+function qtyOf(code) { return state[code] || 0; }
 
 const chipAll = document.createElement("button");
 chipAll.className = "chip on"; chipAll.textContent = "全部";
@@ -219,7 +262,8 @@ function renderMenu() {
   const kw = keyword.toLowerCase();
   const match = m => (activeCat === "全部" || m.category === activeCat) &&
                      (!kw || m.name.toLowerCase().includes(kw));
-  const groups = [...new Set(MENU.map(m => m.category))].filter(cat => MENU.some(m => m.category === cat && match(m)));
+  const groups = [...new Set(MENU.map(m => m.category))]
+    .filter(cat => MENU.some(m => m.category === cat && match(m)));
   if (!groups.length) {
     menuEl.innerHTML = `<div class="empty">没有匹配的餐品，换个关键词试试</div>`;
     return;
@@ -266,25 +310,27 @@ function renderMenu() {
   });
 }
 
-// 跨筛选/搜索保留数量状态
-const state = {};
-function qtyOf(code) { return state[code] || 0; }
+// ---- 券与团购标签 ----
+document.getElementById("coupons").innerHTML =
+  COUPONS.map(c => `<span class="tag">${c.discount === -1 ? c.title + "（9 折）" : c.title}</span>`).join("") +
+  `<span class="tag">合计 ${COUPONS.length} 张</span>`;
 
-// ---- 券标签 ----
-function couponTags() {
-  return COUPONS.map(c => {
-    if (c.discount === -1) return `<span class="tag">${c.title}（9 折）</span>`;
-    return `<span class="tag">${c.title}</span>`;
-  }).join("") + `<span class="tag">合计 ${COUPONS.length} 张</span>`;
-}
-document.getElementById("coupons").innerHTML = couponTags();
+document.getElementById("deals").innerHTML =
+  DEALS.map(d => {
+    const rate = d.price / d.face;
+    const platCls = d.platform === "meituan" ? "meituan" : "douyin";
+    const platName = d.platform === "meituan" ? "美团" : "抖音";
+    return `<div class="deal"><span class="t">
+      <span class="plat ${platCls}">${platName}</span>${d.title}
+      <span class="price" style="color:var(--muted)"> ¥${d.price.toFixed(2)}/¥${d.face.toFixed(2)}</span></span>
+      <span class="rate">${(rate*100).toFixed(1)}%</span></div>`;
+  }).join("");
 
-// ---- 工具函数（与 optimizer.py 同口径）----
+// ---- 工具函数（与 optimizer.py / deal_compare.py 同口径）----
 const priceOf = code => (MENU.find(m => m.mealCode === code) || {price:0}).price;
 const nameOf  = code => (MENU.find(m => m.mealCode === code) || {name:code}).name;
 const faceOf  = entries => entries.reduce((s,e) => s + priceOf(e.mealCode) * e.quantity, 0);
 
-// 统一计价：threshold/discount + 特殊 9 折券
 function couponPayable(face, c) {
   if (c.discount === -1) return Math.max(0, Math.round(face * 0.9 * 100) / 100);
   if (face < c.threshold) return null;
@@ -309,6 +355,7 @@ function calc() {
   const baseline = baseFace;
   baselineEl.innerHTML = `<div class="baseline"><span>购物车合计（无券直点）</span><b>¥${baseline.toFixed(2)}</b></div>`;
 
+  // ---- 官方渠道：券组合优化 ----
   const plans = [{label:"无券直点", entries:wants, note:"", payable:baseline}];
   const addons = MENU.filter(m => !wants.some(w => w.mealCode === m.mealCode))
                      .sort((a,b) => a.price - b.price).slice(0, ADDON_LIMIT);
@@ -326,22 +373,25 @@ function calc() {
       }
     }
   });
-
   plans.forEach(p => { if (p.payable === null) p.payable = Infinity; });
   plans.sort((a,b) => a.payable - b.payable || a.entries.length - b.entries.length);
   const top = plans.filter(p => isFinite(p.payable)).slice(0, 4);
-  if (!top.length) {
-    resultEl.innerHTML = `<div class="empty">无可行方案</div>`;
-    return;
-  }
+  const officialBest = plans[0].payable;
 
-  resultEl.innerHTML = top.map((p, i) => {
+  // ---- 团购渠道：同内容折算估算 ----
+  const dealEsts = DEALS.map(d => ({...d, est: baseline * (d.price / d.face)}))
+                        .sort((a,b) => a.est - b.est);
+  const dealBest = dealEsts[0];
+  const useDeal = dealBest.est < officialBest - 0.01;
+
+  // ---- 官方方案渲染 ----
+  let html = top.map((p, i) => {
     const save = baseline - p.payable;
     const pct = baseline ? (save / baseline * 100) : 0;
     const detail = p.entries.map(e => `${nameOf(e.mealCode)}×${e.quantity}`).join(" + ");
     const barW = save > 0 ? Math.max(6, (save / Math.max(1, baseline - top[0].payable)) * 100) : 4;
     return `<div class="plan ${i===0 ? "best" : ""}">
-      <div class="head"><span class="label">${i+1}. ${p.label}${i===0 ? '<span class="best-tag">★ 最优</span>' : ""}</span>
+      <div class="head"><span class="label">${i+1}. ${p.label}${i===0 ? '<span class="best-tag">★ 官方最优</span>' : ""}</span>
         <span class="pay">¥${p.payable.toFixed(2)}</span></div>
       <div class="detail">${detail}</div>
       <div><span class="save">${save > 0 ? `较无券直点省 ¥${save.toFixed(2)}（${pct.toFixed(0)}%）` : "与无券直点同价"}</span></div>
@@ -349,6 +399,30 @@ function calc() {
       <div class="bar"><div style="width:${barW}%"></div></div>
     </div>`;
   }).join("");
+
+  // ---- 团购估算渲染 + 终局建议 ----
+  const platName = p => p === "meituan" ? "美团" : "抖音";
+  html += dealEsts.slice(0, 3).map((d, i) => {
+    const tag = (useDeal && i === 0) ? '<span class="final-tag">★ 团购最优</span>' : "";
+    return `<div class="plan ${useDeal && i===0 ? "final" : ""}">
+      <div class="head"><span class="label">🏷️ ${platName(d.platform)}｜${d.title}${tag}</span>
+        <span class="pay">¥${d.est.toFixed(2)}</span></div>
+      <div class="detail">同内容估算（原价 ¥${baseline.toFixed(2)} × 售价/面值 ${(d.price/d.face*100).toFixed(1)}%），券售价 ¥${d.price.toFixed(2)}/面值 ¥${d.face.toFixed(2)}</div>
+      <div><span class="save">${officialBest - d.est > 0.01
+        ? `较官方最优再省 ¥${(officialBest - d.est).toFixed(2)}`
+        : `不如官方券组合（官方 ¥${officialBest.toFixed(2)} 更省）`}</span></div>
+    </div>`;
+  }).join("");
+
+  html += useDeal
+    ? `<div class="plan final"><div class="head"><span class="label">🏁 终局建议</span></div>
+        <div class="detail">优先在 ${platName(dealBest.platform)} 购买「${dealBest.title}」（估算到手 ¥${dealBest.est.toFixed(2)}），
+        到店按券内容核销；购物车中未被券覆盖的部分再走官方渠道并重复上述优化。若券已售罄或门店不符，回退官方最优方案 ¥${officialBest.toFixed(2)}。</div></div>`
+    : `<div class="plan best"><div class="head"><span class="label">🏁 终局建议</span></div>
+        <div class="detail">官方券组合已是最优（¥${officialBest.toFixed(2)}），现有团购估算均不低于此——直接走官方渠道，
+        用「${plans[0].label}」下单即可。</div></div>`;
+
+  resultEl.innerHTML = html;
 }
 
 function share() {
@@ -378,7 +452,7 @@ function reset() {
   renderMenu();
   document.getElementById("baseline").innerHTML = "";
   document.getElementById("result").innerHTML =
-    `<div class="empty">选好想吃的餐品后点击「计算最优方案」<br>凑单方案会自动标注陷阱提示</div>`;
+    `<div class="empty">选好想吃的餐品后点击「计算最优方案」<br>自动对比官方券组合与团购估算</div>`;
 }
 
 renderMenu();
