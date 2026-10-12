@@ -10,6 +10,8 @@
 
 ```
 [1] available-coupons → 用户同意 → auto-bind-coupons   # 领券
+    （CLI 用户：python scripts/mcd.py claim —— 展示清单 → y 确认 → 一键领取；
+      无定时/无人值守模式，风控安全优先）
 [2] query-store-coupons（门店 + orderType）             # 选券
 [3] calculate-price（无券）vs calculate-price（带券）   # 比价，展示省钱明细
 [4] query-my-account → mall-points-products            # 积分抵扣评估
