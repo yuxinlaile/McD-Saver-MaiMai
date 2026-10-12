@@ -103,6 +103,7 @@
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   footer { text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.9; }
   a { color:var(--red); }
+  textarea:focus { outline:none; border-color:var(--amber); }
 </style>
 </head>
 <body>
@@ -121,8 +122,10 @@
         </div>
         <div class="toolbar" id="chips"></div>
         <div id="menu"></div>
-        <div class="notice">示例菜单覆盖麦当劳 App 主流单品与套餐（31 项，价格为 2026-10 参考价）；
-          实时全量菜单与准确价格需 MCP Token 走官方 <code>query-meals</code> 获取。</div>
+        <div class="notice">示例菜单覆盖麦当劳 App 主流单品与套餐（31 项，价格为 2026-10 参考价）。
+          App 全量菜单按门店/时段动态变化且规模远大于此——静态页内置全量会立刻过时，
+          也不符合 MCP 服务规则的数据使用边界；正确姿势见下方「📥 导入真实菜单」：
+          用你的 Token 跑 <code>query-meals</code>，把输出粘贴进来即可用<b>实时全量菜单</b>跑同一套优化算法。</div>
       </div>
       <div class="card">
         <h2>② 可用券<span class="hint">自动参与组合优化</span></h2>
@@ -134,6 +137,28 @@
         <div class="notice">折算口径与仓库 <code>deal_compare.py</code> 一致：估算到手价 =
           当前购物车原价 ×（团购售价 ÷ 券面值）。团购券内容固定，能否覆盖你的购物车以平台券详情页为准。</div>
       </div>
+
+      <details class="card">
+        <summary style="cursor:pointer;font-size:14px;color:var(--red);font-weight:bold;">
+          📥 导入真实菜单（进阶：同步麦当劳 App 全量可选项目）</summary>
+        <div style="margin-top:12px;">
+          <div class="notice" style="margin:0 0 10px;">
+            步骤：申请 MCP Token（open.mcd.cn/mcp）→ 执行
+            <code>python scripts/mcd.py call query-meals --raw &gt; menu.json</code>
+            → 把 <code>menu.json</code> 的全部内容粘贴到下方 → 点击导入。
+            页面会做宽容字段解析（名称/价格/热量/套餐组成），解析失败的字段会如实提示。
+            这就是「全量同步」的正确姿势：数据实时、全量、且只在你本地使用。
+          </div>
+          <textarea id="importBox" style="width:100%;height:120px;border:1px solid var(--line);
+            border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;"
+            placeholder='粘贴 query-meals 的 JSON 输出…（也接受简化数组：[{"name":"巨无霸","price":25.0}]）'></textarea>
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button class="calc" style="flex:none;padding:9px 18px;font-size:13px;" onclick="importMenu()">导入并替换菜单</button>
+            <button class="reset" onclick="restoreSample()">恢复示例菜单</button>
+          </div>
+          <div id="importStatus" class="notice" style="margin-top:10px;">尚未导入。</div>
+        </div>
+      </details>
     </div>
 
     <div class="sticky">
@@ -161,7 +186,7 @@
 
 <script>
 // 示例数据：覆盖麦当劳 App 主流单品/套餐（参考价，2026-10）
-const MENU = [
+let MENU = [
   // 汉堡与卷
   {mealCode:"H1", name:"巨无霸", price:25.0, category:"汉堡"},
   {mealCode:"H2", name:"麦辣鸡腿堡", price:22.0, category:"汉堡"},
@@ -427,11 +452,7 @@ function calc() {
 
 function share() {
   const url = "https://yuxinlaile.github.io/maimai-saver/demo.html";
-  const done = () => {
-    const t = document.getElementById("toast");
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 2000);
-  };
+  const done = () => toast("链接已复制，发给朋友一起省钱 🍟");
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
   } else {
@@ -446,6 +467,84 @@ function fallbackCopy(text, done) {
   document.body.removeChild(ta);
 }
 
+// ---- 导入真实菜单（宽容解析 MCP query-meals 输出）----
+function unwrapItems(raw) {
+  let data = raw;
+  if (data && typeof data === "object" && Array.isArray(data.content)) {
+    for (const c of data.content) {
+      if (c && c.type === "text" && c.text) {
+        try { data = JSON.parse(c.text); break; } catch (e) { /* 继续用原对象 */ }
+      }
+    }
+  }
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    for (const key of ["data", "items", "list", "records", "foods", "menu", "meals"]) {
+      if (Array.isArray(data[key])) { data = data[key]; break; }
+      if (data[key] && typeof data[key] === "object" && Array.isArray(data[key].items)) {
+        data = data[key].items; break;
+      }
+    }
+  }
+  return Array.isArray(data) ? data.filter(x => x && typeof x === "object") : [];
+}
+
+function importMenu() {
+  const box = document.getElementById("importBox");
+  const status = document.getElementById("importStatus");
+  let raw;
+  try { raw = JSON.parse(box.value); }
+  catch (e) { status.textContent = "导入失败：内容不是合法 JSON。"; return; }
+
+  const rows = unwrapItems(raw);
+  const items = [];
+  const nameKeys = ["name", "title", "productName", "mealName", "foodName"];
+  const priceKeys = ["price", "price2", "salePrice", "amount", "totalPrice"];
+  const kcalKeys = ["kcal", "calories", "energy"];
+  rows.forEach((r, idx) => {
+    const name = nameKeys.map(k => r[k]).find(v => typeof v === "string" && v.trim());
+    const priceRaw = priceKeys.map(k => r[k]).find(v => typeof v === "number" && v > 0);
+    if (!name || priceRaw === undefined) return;  // 无名或无价的行如实跳过
+    const item = {
+      mealCode: String(r.mealCode || r.code || r.productId || r.id || ("X" + (idx + 1))),
+      name: String(name).trim(),
+      price: Math.round(Number(priceRaw) * 100) / 100,
+      category: String(r.category || r.tagName || "导入"),
+    };
+    const kcal = kcalKeys.map(k => r[k]).find(v => typeof v === "number" && v > 0);
+    if (kcal !== undefined) item.kcal = kcal;
+    if (Array.isArray(r.contains) && r.contains.length) item.contains = r.contains.map(String);
+    items.push(item);
+  });
+
+  if (items.length < 3) {
+    status.textContent = "导入失败：仅识别到 " + items.length +
+      " 个有效餐品（需 ≥3）。请确认粘贴的是 query-meals 的完整输出，或使用简化数组格式。";
+    return;
+  }
+  MENU = items;
+  Object.keys(state).forEach(k => delete state[k]);
+  renderMenu();
+  const withKcal = items.filter(i => i.kcal).length;
+  status.textContent = "✔ 导入成功：" + items.length + " 个餐品（含热量 " + withKcal +
+    " 项）。数据为你本地 MCP 查询的实时结果；套餐替换候选需菜单含 contains 字段。";
+  toast("真实菜单已导入，开始试算吧 🍟");
+}
+
+function restoreSample() {
+  if (typeof SAMPLE_MENU !== "undefined" && SAMPLE_MENU) {
+    MENU = SAMPLE_MENU;
+    Object.keys(state).forEach(k => delete state[k]);
+    renderMenu();
+    document.getElementById("importStatus").textContent = "已恢复示例菜单。";
+  }
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => { t.classList.remove("show"); t.textContent = "链接已复制，发给朋友一起省钱 🍟"; }, 2000);
+}
+
 function reset() {
   Object.keys(state).forEach(k => delete state[k]);
   searchEl.value = ""; keyword = "";
@@ -455,6 +554,7 @@ function reset() {
     `<div class="empty">选好想吃的餐品后点击「计算最优方案」<br>自动对比官方券组合与团购估算</div>`;
 }
 
+const SAMPLE_MENU = JSON.parse(JSON.stringify(MENU));
 renderMenu();
 </script>
 </body>
