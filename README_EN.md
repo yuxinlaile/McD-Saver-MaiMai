@@ -20,7 +20,7 @@ redemption evaluation. Every quote comes with a savings breakdown
 [![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-75%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-84%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -111,7 +111,7 @@ The project ships three components:
   calculate-price, with no-add-on as the baseline and mandatory add-on caveats
 - **Silent-cost check**: expiring-coupon face-value total + order-history profile
   (avg ticket / repeat items) + points expiry — answers "how much are you throwing away?"
-- **Tested**: 75 unit tests covering SSE parsing, token resolution, backoff math,
+- **Tested**: 84 unit tests covering SSE parsing, token resolution, backoff math,
   comparison decisions, combination optimization and CLI exit codes
 
 ## Tool coverage
@@ -225,7 +225,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages online calculator (no sign-in)
 │   └── assets/                         # README preview images (SVG)
-├── tests/                              # pytest unit tests (75 cases)
+├── tests/                              # pytest unit tests (84 cases)
 └── .github/                            # CI + Issue/PR templates
 ```
 
@@ -356,10 +356,14 @@ python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons c
 # Real pricing mode (official calculate-price per plan; requires --store-code)
 python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
     --mcp --store-code ST00123
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
+    --budget 30 --max-kcal 800   # optional budget/kcal caps; violators ranked last & flagged
 python scripts/optimizer.py demo        # offline demo
 ```
 
-Data file formats are documented in the script docstring and SKILL.md workflow 5.
+Menu items may carry optional `kcal` (from list-nutrition-foods) and `contains`
+(combo contents, used to generate "swap to set meal" candidates). Data file
+formats are documented in the script docstring and SKILL.md workflow 5.
 
 ### silent_cost.py (silent-cost check)
 
@@ -460,7 +464,7 @@ non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disc
 # Syntax check (same as CI)
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# Install dev dependencies and run unit tests (75 cases, no network required)
+# Install dev dependencies and run unit tests (84 cases, no network required)
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
