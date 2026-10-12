@@ -42,7 +42,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 EXIT_OK = 0
 EXIT_USAGE = 1
@@ -90,7 +90,10 @@ class Plan:
         self.coupon = coupon
         self.note = note
         self.payable: Optional[float] = None
+        self.kcal: Optional[float] = None
         self.valid = True
+        self.over_budget = False
+        self.over_kcal = False
 
     @property
     def label(self) -> str:
@@ -168,7 +171,8 @@ def build_candidates(
     menu: Dict[str, Any],
     addon_limit: int = 3,
 ) -> List[Plan]:
-    """生成候选方案：无券直点 + 每券一方案（未达门槛则尝试最便宜凑单品）。"""
+    """生成候选方案：无券直点 + 每券一方案（未达门槛则尝试最便宜凑单品）
+    + 套餐替换（套餐 contains 覆盖全部想吃单品且更省时才会在排名中胜出）。"""
     base = Cart(wants)
     price_table = {i["mealCode"]: float(i.get("price", 0) or 0) for i in menu.get("items", [])}
     face = sum(price_table.get(e["mealCode"], 0.0) * e["quantity"] for e in base.entries)
@@ -193,6 +197,19 @@ def build_candidates(
                          note="凑单:{0}".format(addon.get("name", addon["mealCode"])))
                 )
                 break
+
+    # 套餐替换：套餐 contains 覆盖全部想吃单品时，生成"改点套餐"候选。
+    # 是否更省交给计价与排名判断——不预设结论。
+    want_qty = {e["mealCode"]: int(e.get("quantity", 1)) for e in base.entries}
+    for combo in menu.get("items", []):
+        contains = combo.get("contains")
+        if not isinstance(contains, list) or combo["mealCode"] in wants_codes:
+            continue
+        if set(contains) >= wants_codes:
+            qty = max(1, max(want_qty.values()))
+            swap = Cart([{"mealCode": combo["mealCode"], "quantity": qty}])
+            plans.append(Plan(swap, None,
+                              note="改点套餐:{0}（覆盖全部想吃单品）".format(combo.get("name", combo["mealCode"]))))
     return plans
 
 
@@ -200,20 +217,42 @@ def score_and_rank(
     plans: List[Plan],
     price_fn: Callable[[Cart, Optional[Dict[str, Any]]], Optional[float]],
     top: int = 3,
+    budget: Optional[float] = None,
+    max_kcal: Optional[float] = None,
+    kcal_table: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
+    """计价并排序；支持可选约束：实付预算与热量上限。
+
+    违反约束的方案不删除，而是排到满足约束的方案之后并打标——
+    用户能看到"差多少"，而不是被静默过滤。
+    """
     for plan in plans:
         plan.payable = price_fn(plan.cart, plan.coupon)
         plan.valid = plan.payable is not None
+        plan.kcal = None
+        if kcal_table and plan.valid:
+            kcal = sum(
+                kcal_table.get(e["mealCode"], 0.0) * e["quantity"] for e in plan.cart.entries
+            )
+            plan.kcal = kcal if kcal > 0 else None
+            if max_kcal is not None and plan.kcal is not None:
+                plan.over_kcal = plan.kcal > max_kcal
+        if budget is not None and plan.payable is not None:
+            plan.over_budget = plan.payable > budget
+
+    def sort_key(plan: Plan) -> Tuple[float, float, int]:
+        violates = (1 if plan.over_budget else 0) + (1 if plan.over_kcal else 0)
+        return (violates, plan.payable or 0.0, plan.cart.item_count())
 
     valid = [p for p in plans if p.valid]
     baseline_candidates = [p for p in valid if p.coupon is None]
     baseline = baseline_candidates[0].payable if baseline_candidates else None
-    # 无券基准缺失（如全部走 --mcp 且 calculate-price 无券报错）时，用最低实付兜底
     if baseline is None and valid:
         baseline = min(p.payable for p in valid)
 
-    ranked = sorted(valid, key=lambda p: (p.payable, p.cart.item_count()))
-    return {"baseline": baseline, "ranked": ranked[: max(1, top)], "invalid": len(plans) - len(valid)}
+    ranked = sorted(valid, key=sort_key)[: max(1, top)]
+    return {"baseline": baseline, "ranked": ranked, "invalid": len(plans) - len(valid),
+            "budget": budget, "max_kcal": max_kcal}
 
 
 # ---------------------------------------------------------------------------
@@ -235,15 +274,27 @@ def render_report(result: Dict[str, Any], mode_label: str) -> str:
         return "\n".join(lines)
 
     lines.append("基准（无券直点）：{0}".format(_fmt(baseline)))
+    if result.get("budget") is not None:
+        lines.append("预算上限：{0}".format(_fmt(result["budget"])))
+    if result.get("max_kcal") is not None:
+        lines.append("热量上限：{0:.0f} kcal".format(result["max_kcal"]))
     lines.append("")
     lines.append("方案排名：")
     for idx, plan in enumerate(ranked, 1):
         saving = baseline - (plan.payable or 0.0)
         ratio = (saving / baseline * 100.0) if baseline else 0.0
         mark = "  ← 最优" if idx == 1 else ""
+        flags = []
+        if plan.over_budget:
+            flags.append("超预算 {0}".format(_fmt((plan.payable or 0) - (result["budget"] or 0))))
+        if plan.over_kcal:
+            flags.append("超热量 {0:.0f} kcal".format((plan.kcal or 0) - (result["max_kcal"] or 0)))
         lines.append("  {0}. {1}".format(idx, plan.label))
-        lines.append("     实付 {0} ｜ 省 {1}（{2:.0f}%）{3}".format(
-            _fmt(plan.payable), _fmt(saving), ratio, mark))
+        kcal_part = " ｜ 热量 {0:.0f} kcal".format(plan.kcal) if plan.kcal is not None else ""
+        lines.append("     实付 {0}{1} ｜ 省 {2}（{3:.0f}%）{4}".format(
+            _fmt(plan.payable), kcal_part, _fmt(saving), ratio, mark))
+        if flags:
+            lines.append("     ⚠️ {0}".format("；".join(flags)))
         if plan.note:
             lines.append("     {0}{1}".format(plan.note, ADDON_HINT))
     if result.get("invalid"):
@@ -260,13 +311,14 @@ def render_report(result: Dict[str, Any], mode_label: str) -> str:
 DEMO_MENU = {
     "storeCode": "DEMO01", "orderType": 1,
     "items": [
-        {"mealCode": "M1", "name": "巨无霸", "price": 25.0, "category": "汉堡"},
-        {"mealCode": "M2", "name": "麦辣鸡腿堡", "price": 22.0, "category": "汉堡"},
-        {"mealCode": "M3", "name": "中薯条", "price": 12.0, "category": "小食"},
-        {"mealCode": "M4", "name": "中可乐", "price": 9.5, "category": "饮品"},
-        {"mealCode": "M5", "name": "麦辣鸡腿堡三件套(堡+中薯+中可)", "price": 33.5, "category": "套餐"},
-        {"mealCode": "M6", "name": "1+1随心配(任选两件)", "price": 13.5, "category": "套餐"},
-        {"mealCode": "M7", "name": "脆薯饼", "price": 7.0, "category": "小食"},
+        {"mealCode": "M1", "name": "巨无霸", "price": 25.0, "category": "汉堡", "kcal": 550},
+        {"mealCode": "M2", "name": "麦辣鸡腿堡", "price": 22.0, "category": "汉堡", "kcal": 520},
+        {"mealCode": "M3", "name": "中薯条", "price": 12.0, "category": "小食", "kcal": 330},
+        {"mealCode": "M4", "name": "中可乐", "price": 9.5, "category": "饮品", "kcal": 210},
+        {"mealCode": "M5", "name": "麦辣鸡腿堡三件套(堡+中薯+中可)", "price": 33.5,
+         "category": "套餐", "kcal": 940, "contains": ["M2", "M3", "M4"]},
+        {"mealCode": "M6", "name": "1+1随心配(任选两件)", "price": 13.5, "category": "套餐", "kcal": 480},
+        {"mealCode": "M7", "name": "脆薯饼", "price": 7.0, "category": "小食", "kcal": 280},
     ],
 }
 DEMO_WANTS = [{"mealCode": "M5", "name": "麦辣鸡腿堡三件套", "quantity": 1}]
@@ -301,6 +353,8 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--store-code", default="", help="真实计价模式必填：门店编码")
     plan.add_argument("--order-type", type=int, default=1, help="1=到店(默认) 2=外送")
     plan.add_argument("--top", type=int, default=3, help="输出前 N 个方案（默认 3）")
+    plan.add_argument("--budget", type=float, default=None, help="实付预算上限（元），超支方案排后并打标")
+    plan.add_argument("--max-kcal", type=float, default=None, help="热量上限（kcal），菜单含 kcal 字段时生效")
     plan.add_argument("--json", dest="as_json", action="store_true", help="JSON 输出")
 
     sub.add_parser("demo", help="离线演示（内嵌示例数据，估算模式）")
@@ -339,7 +393,12 @@ def run_plan(args: argparse.Namespace) -> int:
         mode_label = "估算模式（本地计价，未经验证）"
 
     plans = build_candidates(wants, coupons, menu)
-    result = score_and_rank(plans, price_fn, top=args.top)
+    kcal_table = {i["mealCode"]: float(i["kcal"]) for i in menu.get("items", [])
+                  if isinstance(i.get("kcal"), (int, float))}
+    result = score_and_rank(plans, price_fn, top=args.top,
+                            budget=args.budget,
+                            max_kcal=args.max_kcal if kcal_table else None,
+                            kcal_table=kcal_table or None)
 
     if args.as_json:
         print(json.dumps({
@@ -365,7 +424,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         return run_plan(args)
     if args.command == "demo":
         plans = build_candidates(DEMO_WANTS, DEMO_COUPONS, DEMO_MENU)
-        result = score_and_rank(plans, make_local_pricer(DEMO_MENU), top=3)
+        kcal_table = {i["mealCode"]: float(i["kcal"]) for i in DEMO_MENU["items"]}
+        result = score_and_rank(plans, make_local_pricer(DEMO_MENU), top=3,
+                                kcal_table=kcal_table)
         print(render_report(result, "估算模式（本地计价，未经验证）"))
         return EXIT_OK
     parser.print_help()
