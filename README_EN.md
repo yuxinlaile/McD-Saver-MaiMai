@@ -52,6 +52,7 @@ redemption evaluation. Every quote comes with a savings breakdown
 - [FAQ](#faq)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Star History](#star-history)
 - [License](#license)
 
 ## Project overview
@@ -203,6 +204,7 @@ maimai-saver/
 ├── SKILL.md                            # Agent Skill entry: methodology & rules
 ├── README.md / README_EN.md            # Project docs (Chinese / English)
 ├── CHANGELOG.md                        # Version history
+├── CONTRIBUTING.md                     # Contribution guide (channels / PR flow / red lines)
 ├── LICENSE                             # MIT + third-party notice
 ├── CONTEST_DECLARATION.md              # Contest declaration (official, unmodified)
 ├── MCP_INTEGRATION.md                  # MCP integration: server/tools/flows/value
@@ -488,7 +490,7 @@ CI (`.github/workflows/ci.yml`) runs both on every push / PR (Python
 
 Issues and PRs are welcome: workflow docs, translation proofreading, tool
 catalog updates (McDonald's MCP iterates fast — the `tools` subcommand output
-is authoritative).
+is authoritative). Full process: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 - Issue templates: bug report, feature request (`.github/ISSUE_TEMPLATE/`)
 - PR template: `.github/PULL_REQUEST_TEMPLATE.md` (with a self-check list)
@@ -500,6 +502,16 @@ Before submitting:
 2. no real tokens, passwords or personal credentials anywhere;
 3. tool catalog/workflow changes are reflected in `references/` and `SKILL.md`;
 4. user-facing changes are noted in `CHANGELOG.md`.
+
+## Star History
+
+If you find this useful, a ⭐ helps more McDonald's regulars discover it:
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/maimai-saver&type=Date)](https://star-history.com/#yuxinlaile/maimai-saver&Date)
+
+</div>
 
 ## License
 
