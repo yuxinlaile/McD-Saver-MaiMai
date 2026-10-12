@@ -16,7 +16,7 @@
 [![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-84%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-89%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -95,7 +95,7 @@
   `--mcp` 模式经官方 calculate-price 逐方案真实计价，凑单以「不凑单」为基准并强制标注提示
 - **沉默成本体检**：临期券面值合计 + 历史订单消费画像（客单价/高频单品）+ 积分临期提醒，
   回答「你正在白扔多少钱」
-- **测试保障**：84 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
+- **测试保障**：89 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
   比价折算决策、组合优化与 CLI 退出码
 
 ## 工具能力总览
@@ -209,7 +209,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages 在线试算器（免登录）
 │   └── assets/                         # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（84 个用例）
+├── tests/                              # pytest 单元测试（89 个用例）
 └── .github/                            # CI + Issue/PR 模板
 ```
 
@@ -310,12 +310,17 @@ python scripts/mcd.py tools                  # 列出全部 35 个工具
 python scripts/mcd.py schema query-meals     # 查看指定工具的入参 JSON Schema
 python scripts/mcd.py call query-nearby-stores --arg address="北京市朝阳区xx路"   # 键值对传参
 python scripts/mcd.py call query-meals --args '{"storeCode": "..."}' --raw      # 整体 JSON + 原始输出
+python scripts/mcd.py claim                # 一键领取麦麦省可领券（展示清单→确认→领取）
 ```
 
 **CLI 退出码**：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
 
 全局选项：`--token`、`--url`、`--timeout`（默认 30s）、`--retries`（默认 3）、
 `--verbose`，子命令前后均可使用。
+
+> **claim 的安全边界**：用户主动触发、单次执行，领取前必须展示清单并按 y 确认
+> （`--yes` 仅供脚本场景跳过交互）；**不提供定时轮询与无人值守后台**——
+> 这类自动化在风控侧等同于机器人行为，有 Token 封禁风险，本项目明确不做。
 
 ### deal_compare.py（全渠道比价）
 
@@ -438,7 +443,7 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 # 语法检查（与 CI 一致）
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# 安装开发依赖并运行单元测试（84 个用例，不发起网络请求）
+# 安装开发依赖并运行单元测试（89 个用例，不发起网络请求）
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

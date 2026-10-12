@@ -20,7 +20,7 @@ redemption evaluation. Every quote comes with a savings breakdown
 [![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-84%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-89%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -111,7 +111,7 @@ The project ships three components:
   calculate-price, with no-add-on as the baseline and mandatory add-on caveats
 - **Silent-cost check**: expiring-coupon face-value total + order-history profile
   (avg ticket / repeat items) + points expiry — answers "how much are you throwing away?"
-- **Tested**: 84 unit tests covering SSE parsing, token resolution, backoff math,
+- **Tested**: 89 unit tests covering SSE parsing, token resolution, backoff math,
   comparison decisions, combination optimization and CLI exit codes
 
 ## Tool coverage
@@ -225,7 +225,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages online calculator (no sign-in)
 │   └── assets/                         # README preview images (SVG)
-├── tests/                              # pytest unit tests (84 cases)
+├── tests/                              # pytest unit tests (89 cases)
 └── .github/                            # CI + Issue/PR templates
 ```
 
@@ -331,12 +331,19 @@ python scripts/mcd.py tools                  # list all 35 tools
 python scripts/mcd.py schema query-meals     # inspect a tool's input schema
 python scripts/mcd.py call query-nearby-stores --arg address="..."   # key=value args
 python scripts/mcd.py call query-meals --args '{"storeCode": "..."}' --raw
+python scripts/mcd.py claim                # claim McDonald's coupons (list → confirm → bind)
 ```
 
 **CLI exit codes**: `0` ok · `1` tool error · `2` auth · `3` rate-limited · `4` network
 
 Global options: `--token`, `--url`, `--timeout` (default 30s), `--retries`
 (default 3), `--verbose` — usable before or after the subcommand.
+
+> **`claim` safety boundary**: user-initiated, single-shot, always shows the list
+> and asks for a `y` confirmation before binding (`--yes` skips the prompt for
+> scripting). **No cron jobs, no unattended background mode** — scheduled
+> automation looks like bot traffic to risk control and risks token bans;
+> this project deliberately does not do it.
 
 ### deal_compare.py (cross-channel comparison)
 
@@ -464,7 +471,7 @@ non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disc
 # Syntax check (same as CI)
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# Install dev dependencies and run unit tests (84 cases, no network required)
+# Install dev dependencies and run unit tests (89 cases, no network required)
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

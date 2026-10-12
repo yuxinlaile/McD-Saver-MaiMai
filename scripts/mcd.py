@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """麦麦省钱助手 —— 命令行入口。
 
-提供四个子命令，覆盖 MCP Server 的全部工具（2026-10 实测为 35 个）：
+提供五个子命令，覆盖 MCP Server 的全部工具（2026-10 实测为 35 个）：
 
     check              连通性 / Token 有效性检查
     tools              列出服务器支持的全部工具
     schema  <tool>     查看指定工具的名称、描述与入参 JSON Schema
     call    <tool>     调用指定工具并输出结果
+    claim              查看并领取麦麦省可领券（交互确认，无定时无后台）
 
 Token 解析优先级（与 mcd_client.load_token 一致）：
     1. --token 参数
@@ -194,6 +195,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="输出 tools/call 的原始 JSON 结果（默认输出可读文本）",
     )
+
+    claim_parser = sub.add_parser(
+        "claim",
+        help="查看并领取麦麦省可领券（先展示清单，交互确认后一键领取）",
+        parents=[common],
+    )
+    claim_parser.add_argument(
+        "--yes", action="store_true",
+        help="跳过交互确认直接领取（脚本场景用；默认必须按 y 确认）",
+    )
     return parser
 
 
@@ -247,6 +258,51 @@ def cmd_call(
     return EXIT_OK
 
 
+def _looks_empty(text: str) -> bool:
+    """判断可领券清单是否为空（宽容匹配常见的空态文案）。"""
+    stripped = text.strip()
+    if not stripped or stripped in ("[]", "{}", "null", "无", "暂无"):
+        return True
+    return any(kw in stripped for kw in ("暂无可领", "没有可领", "无可领取", "为空"))
+
+
+def run_claim(client: McdMcpClient, yes: bool = False,
+              confirm_fn=None, out=None) -> int:
+    """一次性领券流程：列出可领券 → 用户确认 → auto-bind-coupons 一键领取。
+
+    设计约束（与 SKILL.md 调用规范一致）：用户主动触发、单次执行、
+    领取前必须展示清单并确认；不提供任何定时/后台模式。
+    """
+    out = out or (lambda s: print(s))
+    confirm_fn = confirm_fn or input
+
+    result = client.call_tool("available-coupons", {})
+    listing = result_to_text(result)
+    out("当前可领取的麦麦省券：")
+    out(listing if listing.strip() else "（空）")
+
+    if _looks_empty(listing):
+        out("暂无可领取的优惠券。")
+        return EXIT_OK
+
+    if not yes:
+        answer = confirm_fn("确认领取以上全部可领券？(y/N) ")
+        if answer.strip().lower() not in ("y", "yes"):
+            out("已取消，未执行任何领取操作。")
+            return EXIT_OK
+
+    claim_result = client.call_tool("auto-bind-coupons", {})
+    out("")
+    out("领取结果：")
+    out(result_to_text(claim_result))
+    out("提示：可在 App「我的优惠券」或用 query-my-coupons 查看券包。")
+    return EXIT_OK
+
+
+def cmd_claim(client: McdMcpClient, yes: bool) -> int:
+    return run_claim(client, yes=yes)
+
+
 # ---------------------------------------------------------------------------
 # 入口
 # ---------------------------------------------------------------------------
@@ -285,6 +341,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.command == "call":
             arguments = _merge_arguments(args.args_json, args.arg_pairs)
             return cmd_call(client, args.tool, arguments, args.raw)
+        if args.command == "claim":
+            return cmd_claim(client, yes=getattr(args, "yes", False))
         parser.error("未知命令: {0}".format(args.command))
         return EXIT_TOOL_ERROR
     except AuthError as exc:

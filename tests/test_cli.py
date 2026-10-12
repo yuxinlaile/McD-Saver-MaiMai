@@ -86,3 +86,55 @@ class TestDealCompareCli:
         env = {"MAIMAI_DEALS_FILE": str(tmp_path / "deals.json")}
         result = _run("deal_compare.py", ["remove", "zzzzzz"], env)
         assert result.returncode == 1
+
+
+class TestClaimFlow:
+    """claim 子命令：一次性领券（展示清单 → 确认 → 领取）。"""
+
+    class FakeClient:
+        def __init__(self, listing):
+            self.listing = listing
+            self.calls = []
+
+        def call_tool(self, name, arguments=None):
+            self.calls.append(name)
+            if name == "available-coupons":
+                return {"content": [{"type": "text", "text": self.listing}]}
+            if name == "auto-bind-coupons":
+                return {"content": [{"type": "text", "text": "已成功领取 2 张"}]}
+            return {}
+
+    LISTING = "- 满30减5\n- 免费麦乐鸡(5块)"
+
+    def test_yes_claims_directly(self, capsys):
+        from mcd import run_claim
+        client = self.FakeClient(self.LISTING)
+        assert run_claim(client, yes=True) == 0
+        assert client.calls == ["available-coupons", "auto-bind-coupons"]
+        assert "已成功领取 2 张" in capsys.readouterr().out
+
+    def test_confirm_y_claims(self, capsys):
+        from mcd import run_claim
+        client = self.FakeClient(self.LISTING)
+        assert run_claim(client, yes=False, confirm_fn=lambda _: "y") == 0
+        assert client.calls == ["available-coupons", "auto-bind-coupons"]
+
+    def test_confirm_n_aborts(self, capsys):
+        from mcd import run_claim
+        client = self.FakeClient(self.LISTING)
+        assert run_claim(client, yes=False, confirm_fn=lambda _: "n") == 0
+        assert client.calls == ["available-coupons"]  # 未执行领取
+        assert "已取消" in capsys.readouterr().out
+
+    def test_empty_listing_skips_claim(self, capsys):
+        from mcd import run_claim
+        client = self.FakeClient("暂无可领取的优惠券")
+        assert run_claim(client, yes=True) == 0
+        assert client.calls == ["available-coupons"]
+        assert "暂无可领取" in capsys.readouterr().out
+
+    def test_uppercase_y_also_confirms(self):
+        from mcd import run_claim
+        client = self.FakeClient(self.LISTING)
+        assert run_claim(client, yes=False, confirm_fn=lambda _: "YES") == 0
+        assert client.calls == ["available-coupons", "auto-bind-coupons"]
