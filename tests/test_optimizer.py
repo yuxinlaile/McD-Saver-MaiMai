@@ -106,3 +106,49 @@ class TestCliSmoke:
         from optimizer import main
         assert main(["plan", "--wants", "nope.json", "--menu", "nope.json",
                      "--coupons", "nope.json"]) == 1
+
+
+class TestConstraints:
+    """v1.4.0 新增：热量/预算约束与套餐替换。"""
+
+    MENU_KCAL = {"items": [
+        {"mealCode": "A", "name": "主餐", "price": 25.0, "kcal": 550},
+        {"mealCode": "B", "name": "小食", "price": 12.0, "kcal": 330},
+        {"mealCode": "M", "name": "主餐套餐(含主餐)", "price": 23.0,
+         "kcal": 520, "contains": ["A"]},
+    ]}
+
+    def test_kcal_computed_per_plan(self):
+        plans = build_candidates(WANTS, [], self.MENU_KCAL)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_KCAL),
+                                kcal_table={"A": 550.0, "M": 520.0})
+        assert result["ranked"][0].kcal == 520.0  # 排名第一的是改点套餐方案
+
+    def test_budget_flags_over_budget(self):
+        plans = build_candidates(WANTS, [], MENU)
+        result = score_and_rank(plans, make_local_pricer(MENU), budget=20.0)
+        assert all(p.over_budget for p in result["ranked"] if (p.payable or 0) > 20.0)
+
+    def test_over_kcal_ranked_last(self):
+        plans = build_candidates(WANTS, [], self.MENU_KCAL)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_KCAL),
+                                max_kcal=400, kcal_table={"A": 550})
+        assert result["ranked"][-1].over_kcal
+
+    def test_set_meal_swap_candidate(self):
+        # wants=[主餐]，菜单里存在 contains 覆盖 A 的套餐 → 生成改点套餐候选
+        plans = build_candidates([{"mealCode": "A"}], [], self.MENU_KCAL)
+        swaps = [p for p in plans if p.note.startswith("改点套餐")]
+        assert len(swaps) == 1
+        assert swaps[0].cart.entries[0]["mealCode"] == "M"
+
+    def test_swap_priced_cheaper_and_wins(self):
+        # 套餐 23 元 < 单点 25 元 → 排名第一（改点套餐方案为无券，标签同基准）
+        plans = build_candidates([{"mealCode": "A"}], [], self.MENU_KCAL)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_KCAL))
+        assert result["ranked"][0].payable == 23.0
+        assert result["ranked"][0].note.startswith("改点套餐")
+
+    def test_swap_skipped_when_combo_is_want(self):
+        plans = build_candidates([{"mealCode": "M"}], [], self.MENU_KCAL)
+        assert all(not p.note.startswith("改点套餐") for p in plans)
