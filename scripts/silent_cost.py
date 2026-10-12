@@ -217,6 +217,26 @@ def analyze_points(points_raw: Any) -> Dict[str, Any]:
             "unrecognized": 0 if available is not None else 1}
 
 
+def analyze_mall(mall_raw: Any) -> Dict[str, Any]:
+    """积分商城影子价格：max(面值 ÷ 积分) = 这些积分最优兑换能换回的现金效率。
+
+    mall_raw 兼容 {"data": [...]} 与 [...]，商品需含积分与面值字段
+    （常见命名：points/needPoint 与 worth/price/faceValue）。
+    """
+    products = _unwrap(mall_raw) if mall_raw else []
+    best: Optional[Dict[str, Any]] = None
+    for p in products:
+        pts = _parse_amount(_first_key(p, ["points", "needPoint", "point", "price2"]))
+        worth = _parse_amount(_first_key(p, ["worth", "price", "faceValue", "value"]))
+        name = _first_key(p, NAME_KEYS) or "未命名商品"
+        if pts and pts > 0 and worth is not None:
+            efficiency = worth / pts
+            if best is None or efficiency > best["efficiency"]:
+                best = {"name": str(name), "points": pts, "worth": worth, "efficiency": efficiency}
+    return {"shadow_price": best["efficiency"] if best else None,
+            "best_product": best, "products": len(products)}
+
+
 # ---------------------------------------------------------------------------
 # 报告
 # ---------------------------------------------------------------------------
@@ -224,7 +244,8 @@ def _fmt(value: Optional[float]) -> str:
     return "¥{0:.2f}".format(value) if value is not None else "未识别"
 
 
-def render_report(coupons: Dict[str, Any], orders: Dict[str, Any], points: Dict[str, Any]) -> str:
+def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
+                  points: Dict[str, Any], mall: Optional[Dict[str, Any]] = None) -> str:
     lines: List[str] = []
     lines.append("=" * 68)
     lines.append("麦麦省钱助手 · 沉默成本体检报告")
@@ -267,6 +288,13 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any], points: Dict[
         if points.get("expiring_next"):
             lines.append("  下月将过期：{0:.0f}".format(points["expiring_next"]))
         lines.append("  建议：优先用积分兑换临期前会用到的餐品券。")
+        if mall and mall.get("shadow_price"):
+            shadow = mall["shadow_price"]
+            lines.append("  积分价值参考：最优兑换「{0}」= {1:.4f} 元/积分"
+                         "（口径：积分商城最优标的效率）".format(
+                             mall["best_product"]["name"], shadow))
+            lines.append("  可用积分折现 ≈ ¥{0:.2f}——用它判断「这单要不要动积分」的机会成本。".format(
+                points["available"] * shadow))
     else:
         lines.append("  积分账户字段未识别（可先用 query-my-account 核对数据）。")
     return "\n".join(lines)
@@ -293,6 +321,11 @@ DEMO_ORDERS = {"data": [
 ]}
 DEMO_POINTS = {"data": {"availablePoint": 1200.0, "currentMouthExpirePoint": 300.0,
                         "nextMouthExpirePoint": 150.0}}
+DEMO_MALL = {"data": [
+    {"name": "中杯鲜煮咖啡券", "points": 500, "worth": 10.5},
+    {"name": "麦辣鸡腿堡券", "points": 3000, "worth": 22.0},
+    {"name": "巨无霸中套餐券", "points": 5000, "worth": 39.5},
+]}
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +346,7 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--coupons", help="query-my-coupons 响应 JSON")
     report.add_argument("--orders", help="order-list 响应 JSON")
     report.add_argument("--points", help="query-my-account 响应 JSON")
+    report.add_argument("--mall", help="积分商城商品列表 JSON（用于积分影子价格估算，可选）")
     sub.add_parser("demo", help="离线演示（内嵌示例数据）")
     return parser
 
@@ -324,14 +358,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "demo":
         print(render_report(analyze_coupons(DEMO_COUPONS, datetime(2026, 10, 12)),
                             analyze_orders(DEMO_ORDERS),
-                            analyze_points(DEMO_POINTS)))
+                            analyze_points(DEMO_POINTS),
+                            analyze_mall(DEMO_MALL)))
         return EXIT_OK
 
     if args.command == "report":
         coupons = _load_json(args.coupons) if args.coupons else {}
         orders = _load_json(args.orders) if args.orders else {}
         points = _load_json(args.points) if args.points else {}
-        print(render_report(analyze_coupons(coupons), analyze_orders(orders), analyze_points(points)))
+        mall = _load_json(args.mall) if args.mall else None
+        print(render_report(analyze_coupons(coupons), analyze_orders(orders),
+                            analyze_points(points), analyze_mall(mall)))
         return EXIT_OK
 
     parser.print_help()
