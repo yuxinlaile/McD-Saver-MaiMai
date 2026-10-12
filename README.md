@@ -139,6 +139,10 @@
 
 在线试算（免登录）：<https://yuxinlaile.github.io/maimai-saver/demo.html>
 
+试算页内置 31 项菜单（7 大类，含早餐段）、9 张券、6 单美团/抖音团购示例与
+跨渠道终局建议，并支持**一键导入真实菜单**——把 MCP `get-menu` 输出原样粘贴
+即可全量替换示例数据，是官方菜单全量同步的正确姿势。
+
 券组合优化（`optimizer.py` 实际输出）：
 
 <div align="center">
