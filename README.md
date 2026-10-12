@@ -13,7 +13,7 @@
 每一次报价都附带省钱明细（原价 / 优惠 / 实付 / 节省比例）。
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
+[![Release](https://img.shields.io/badge/Release-v1.4.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.4.2)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-89%20passed-brightgreen)
@@ -140,7 +140,7 @@
 在线试算（免登录）：<https://yuxinlaile.github.io/maimai-saver/demo.html>
 
 试算页内置 31 项菜单（7 大类，含早餐段）、9 张券、6 单美团/抖音团购示例与
-跨渠道终局建议，并支持**一键导入真实菜单**——把 MCP `get-menu` 输出原样粘贴
+跨渠道终局建议，并支持**一键导入真实菜单**——把 MCP `query-meals` 输出原样粘贴
 即可全量替换示例数据，是官方菜单全量同步的正确姿势。
 
 券组合优化（`optimizer.py` 实际输出）：
@@ -194,10 +194,10 @@ maimai-saver/
 ├── requirements-dev.txt                # 开发/测试依赖（pytest）
 ├── config/
 │   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
-├── install.ps1                       # Windows 一键安装脚本（备份旧版，不碰 Token）
+├── install.ps1                         # Windows 一键安装脚本（备份旧版，不碰 Token）
 ├── scripts/
 │   ├── mcd_client.py                   # MCP Streamable HTTP 客户端核心（纯标准库）
-│   ├── mcd.py                          # CLI 入口：check / tools / schema / call
+│   ├── mcd.py                          # CLI 入口：check / tools / schema / call / claim
 │   ├── deal_compare.py                 # 全渠道比价引擎（美团/抖音券手动录入）
 │   ├── optimizer.py                    # 券组合优化器（估算/--mcp 真实计价双模式）
 │   └── silent_cost.py                  # 沉默成本体检（临期券/消费画像/积分）
@@ -445,7 +445,7 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 
 ```bash
 # 语法检查（与 CI 一致）
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
+python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py
 
 # 安装开发依赖并运行单元测试（89 个用例，不发起网络请求）
 pip install -r requirements-dev.txt
@@ -462,6 +462,7 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检�
 
 - Issue 模板：Bug 报告、功能建议（`.github/ISSUE_TEMPLATE/`）
 - PR 模板：`.github/PULL_REQUEST_TEMPLATE.md`（含自检清单）
+- 使用咨询 / 比价数据分享：[Discussions](https://github.com/yuxinlaile/maimai-saver/discussions)（已开启）
 
 提交前请确认：
 
