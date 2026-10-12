@@ -74,6 +74,13 @@
   .bar > div { height:100%; border-radius:4px;
                background:linear-gradient(90deg,var(--amber),var(--red)); transition:width .4s; }
   .empty { text-align:center; color:var(--muted); font-size:13px; padding:28px 0; }
+  button.share { padding:12px 16px; font-size:14px; color:var(--red); background:#fff5ec;
+                 border:1.5px solid #fed7aa; border-radius:10px; cursor:pointer; }
+  button.share:hover { background:#ffe8d6; border-color:var(--amber); }
+  .toast { position:fixed; left:50%; bottom:36px; transform:translateX(-50%) translateY(20px);
+           background:#292524; color:#fff; font-size:13px; padding:10px 18px; border-radius:8px;
+           opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:9; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   footer { text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.9; }
   a { color:var(--red); }
 </style>
@@ -102,8 +109,10 @@
         <h2>③ 优化结果</h2>
         <div class="actions">
           <button class="calc" onclick="calc()">🧮 计算最优方案</button>
+          <button class="share" onclick="share()" title="复制本页链接">🔗</button>
           <button class="reset" onclick="reset()">重置</button>
         </div>
+        <div class="toast" id="toast">链接已复制，发给朋友一起省钱 🍟</div>
         <div id="baseline"></div>
         <div id="result"><div class="empty">选好想吃的餐品后点击「计算最优方案」<br>凑单方案会自动标注陷阱提示</div></div>
       </div>
@@ -245,6 +254,27 @@ function calc() {
       <div class="bar"><div style="width:${barW}%"></div></div>
     </div>`;
   }).join("");
+}
+
+function share() {
+  const url = "https://yuxinlaile.github.io/maimai-saver/demo.html";
+  const done = () => {
+    const t = document.getElementById("toast");
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+  } else {
+    fallbackCopy(url, done);
+  }
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { window.prompt("复制链接：", text); }
+  document.body.removeChild(ta);
 }
 
 function reset() {
