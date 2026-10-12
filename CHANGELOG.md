@@ -3,6 +3,26 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式，
 版本号遵循语义化版本（SemVer）。
 
+## [1.4.0] - 2026-10-12
+
+### Added
+- optimizer.py：**多约束支持**——`--budget` 实付预算上限与 `--max-kcal` 热量上限
+  （菜单含 kcal 字段时生效），违反约束的方案排后并标注"超预算/超热量 xx"，
+  不静默删除；**套餐替换枚举**——套餐含 `contains` 字段覆盖全部想吃单品时
+  自动生成"改点套餐"候选，是否更省交给计价排名判断
+- silent_cost.py：**积分影子价格**——`--mall` 传入积分商城商品列表后，
+  按 max(面值÷积分) 估算最优兑换效率并给出可用积分折现值
+  （借鉴 mcd-points-actuary 的统一成本口径）
+- 单元测试 75 → 84（新增约束/套餐替换/影子价格用例）
+
+### Changed
+- SKILL.md 工作流 5 补充约束参数说明；README 中英运行与命令同步
+
+### 致谢
+- 本版吸收了大赛社区项目的公开思路：YOMXXX/McOptima 的多约束求解、
+  akexin/mcd-points-actuary 的积分影子价格、BreadKid/mcd-order-calories 的
+  "算不出如实披露"原则
+
 ## [1.3.0] - 2026-10-12
 
 ### Added
@@ -17,7 +37,7 @@
   数据，免登录免 Token 开箱即验；界面采用双栏卡片式布局（桌面端左选右算、
   移动端自适应），整卡点选 + 数量步进器，凑单陷阱独立警示样式，支持一键重置
 - `install.ps1`：Windows 一键安装脚本（备份旧版本，不触碰 Token 与连接器）
-- 预览图 `docs/assets/optimizer-report.svg`；单元测试 49 → 75（新增优化器与
+- 预览图 `docs/assets/optimizer-report.svg`；单元测试 49 → 84（新增优化器与
   体检模块用例）
 - README（中英）头部新增在线试算与 Release 徽章
 
