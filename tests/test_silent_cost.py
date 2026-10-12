@@ -3,6 +3,7 @@ from datetime import datetime
 
 from silent_cost import (
     analyze_coupons,
+    analyze_mall,
     analyze_orders,
     analyze_points,
     render_report,
@@ -100,3 +101,32 @@ class TestReport:
         from silent_cost import main
         assert main(["demo"]) == 0
         assert "沉默成本体检报告" in capsys.readouterr().out
+
+
+class TestMallShadowPrice:
+    """v1.4.0 新增：积分商城影子价格。"""
+
+    def test_shadow_price_is_max_efficiency(self):
+        raw = {"data": [
+            {"name": "咖啡券", "points": 500, "worth": 10.5},   # 0.021
+            {"name": "套餐券", "points": 5000, "worth": 39.5},  # 0.0079
+        ]}
+        result = analyze_mall(raw)
+        assert result["shadow_price"] == 10.5 / 500
+        assert result["best_product"]["name"] == "咖啡券"
+
+    def test_invalid_products_ignored(self):
+        result = analyze_mall({"data": [
+            {"name": "零分商品", "points": 0, "worth": 10.0},
+            {"name": "无面值", "points": 100},
+        ]})
+        assert result["shadow_price"] is None
+
+    def test_report_includes_shadow_price_line(self):
+        from silent_cost import analyze_mall
+        mall = analyze_mall({"data": [{"name": "咖啡券", "points": 500, "worth": 10.5}]})
+        points = analyze_points({"data": {"availablePoint": 1000.0}})
+        out = render_report(analyze_coupons([], TODAY), analyze_orders({"data": []}),
+                            points, mall)
+        assert "积分价值参考" in out and "0.0210" in out
+        assert "¥21.00" in out
