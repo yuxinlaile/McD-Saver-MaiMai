@@ -16,7 +16,7 @@
 [![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-75%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-84%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -95,7 +95,7 @@
   `--mcp` 模式经官方 calculate-price 逐方案真实计价，凑单以「不凑单」为基准并强制标注提示
 - **沉默成本体检**：临期券面值合计 + 历史订单消费画像（客单价/高频单品）+ 积分临期提醒，
   回答「你正在白扔多少钱」
-- **测试保障**：75 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
+- **测试保障**：84 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
   比价折算决策、组合优化与 CLI 退出码
 
 ## 工具能力总览
@@ -209,7 +209,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages 在线试算器（免登录）
 │   └── assets/                         # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（75 个用例）
+├── tests/                              # pytest 单元测试（84 个用例）
 └── .github/                            # CI + Issue/PR 模板
 ```
 
@@ -335,10 +335,14 @@ python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons c
 # 真实计价模式（官方 calculate-price 逐方案核价，可作下单依据；需 --store-code）
 python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
     --mcp --store-code ST00123
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
+    --budget 30 --max-kcal 800   # 可选：预算/热量约束，超支方案排后并标注
 python scripts/optimizer.py demo        # 离线演示
 ```
 
-数据文件格式与各字段获取方式见脚本 docstring 与 SKILL.md 工作流 5。
+菜单条目可选 `kcal`（热量，来自 list-nutrition-foods）与 `contains`（套餐覆盖的单品
+编码，用于生成"改点套餐"候选）。数据文件格式与各字段获取方式见脚本 docstring
+与 SKILL.md 工作流 5。
 
 ### silent_cost.py（沉默成本体检）
 
@@ -434,7 +438,7 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 # 语法检查（与 CI 一致）
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# 安装开发依赖并运行单元测试（75 个用例，不发起网络请求）
+# 安装开发依赖并运行单元测试（84 个用例，不发起网络请求）
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
