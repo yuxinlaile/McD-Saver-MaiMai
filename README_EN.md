@@ -16,6 +16,8 @@ check** — claim coupons → pick coupons → dual-price comparison → points
 redemption evaluation. Every quote comes with a savings breakdown
 (list price / discount / payable / saved).
 
+[![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
+[![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-75%20passed-brightgreen)

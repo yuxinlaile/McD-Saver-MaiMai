@@ -5,52 +5,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>麦麦省钱助手 · 在线试算</title>
 <style>
-  :root { --red:#c2410c; --amber:#f59e0b; --bg:#fff7ed; --card:#ffffff; --text:#292524; --muted:#78716c; --line:#e7e5e4; --green:#16a34a; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: "PingFang SC","Microsoft YaHei",system-ui,sans-serif; background:var(--bg); color:var(--text); padding:24px 16px 64px; }
-  .wrap { max-width: 860px; margin: 0 auto; }
-  header { text-align:center; margin-bottom:20px; }
-  header h1 { font-size:26px; color:var(--red); }
-  header p { color:var(--muted); font-size:13px; margin-top:6px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-  .card h2 { font-size:15px; margin-bottom:10px; color:var(--red); }
-  .items { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:8px; }
-  .item { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; }
-  .item .name { flex:1; }
-  .item .price { color:var(--muted); white-space:nowrap; }
-  .qty { width:44px; text-align:center; border:1px solid var(--line); border-radius:6px; padding:2px; }
-  button.calc { width:100%; padding:12px; font-size:15px; font-weight:bold; color:#fff; background:var(--red); border:none; border-radius:10px; cursor:pointer; }
-  button.calc:hover { background:#9a3412; }
-  .plan { border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:10px; font-size:13px; }
-  .plan.best { border-color:var(--green); background:#f0fdf4; }
-  .plan .head { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; }
-  .plan .best-tag { color:var(--green); }
-  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:8px; }
-  .bar > div { height:100%; background:linear-gradient(90deg,var(--amber),var(--red)); }
-  .note { color:var(--muted); font-size:12px; margin-top:6px; }
-  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:24px; line-height:1.8; }
+  :root {
+    --red:#c2410c; --red-deep:#9a3412; --amber:#f59e0b;
+    --bg:#fff7ed; --card:#ffffff; --text:#292524; --muted:#78716c;
+    --line:#e7e5e4; --green:#16a34a; --green-bg:#f0fdf4; --warn-bg:#fffbeb;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+         background:linear-gradient(180deg,var(--bg),#fff); color:var(--text);
+         min-height:100vh; padding:28px 16px 72px; }
+  .wrap { max-width:1000px; margin:0 auto; }
+  header { text-align:center; margin-bottom:22px; }
+  header .brand { font-size:26px; font-weight:800; color:var(--red); letter-spacing:1px; }
+  header .sub { color:var(--muted); font-size:13px; margin-top:6px; }
+  .layout { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start; }
+  @media (max-width:860px) { .layout { grid-template-columns:1fr; } .sticky { position:static; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:18px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .card h2 { font-size:14px; color:var(--red); margin-bottom:12px; letter-spacing:.5px; }
+  .card h2 .hint { color:var(--muted); font-weight:normal; margin-left:8px; font-size:12px; }
+  .group-title { font-size:12px; color:var(--muted); margin:14px 0 8px; display:flex; align-items:center; gap:8px; }
+  .group-title::after { content:""; flex:1; height:1px; background:var(--line); }
+  .items { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width:560px) { .items { grid-template-columns:1fr; } }
+  .item { display:flex; align-items:center; gap:10px; border:1.5px solid var(--line);
+          border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
+          transition:border-color .15s, background .15s, transform .05s; }
+  .item:hover { border-color:var(--amber); }
+  .item:active { transform:scale(.99); }
+  .item.on { border-color:var(--red); background:#fff5ec; }
+  .item .check { width:18px; height:18px; border-radius:5px; border:1.5px solid var(--line);
+                 display:flex; align-items:center; justify-content:center; flex:none;
+                 color:#fff; font-size:12px; transition:all .15s; }
+  .item.on .check { background:var(--red); border-color:var(--red); }
+  .item .info { flex:1; min-width:0; }
+  .item .name { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .price { color:var(--muted); font-size:12px; margin-top:2px; }
+  .stepper { display:flex; align-items:center; gap:6px; flex:none; }
+  .stepper button { width:22px; height:22px; border:1px solid var(--line); background:#fff;
+                    border-radius:6px; cursor:pointer; font-size:14px; line-height:1; color:var(--red); }
+  .stepper button:hover { border-color:var(--red); }
+  .stepper span { min-width:18px; text-align:center; font-size:13px; font-weight:bold; }
+  .coupons { font-size:13px; line-height:2; }
+  .coupons .tag { display:inline-block; background:#fff5ec; border:1px solid #fed7aa;
+                  color:var(--red-deep); border-radius:6px; padding:1px 8px; margin:2px 4px 2px 0; font-size:12px; }
+  .sticky { position:sticky; top:16px; }
+  .actions { display:flex; gap:10px; margin-bottom:14px; }
+  button.calc { flex:1; padding:12px; font-size:15px; font-weight:bold; color:#fff;
+                background:var(--red); border:none; border-radius:10px; cursor:pointer; }
+  button.calc:hover { background:var(--red-deep); }
+  button.reset { padding:12px 18px; font-size:14px; color:var(--muted); background:#fff;
+                 border:1px solid var(--line); border-radius:10px; cursor:pointer; }
+  button.reset:hover { border-color:var(--muted); }
+  .baseline { display:flex; justify-content:space-between; font-size:13px; color:var(--muted);
+              background:#fafaf9; border-radius:8px; padding:8px 12px; margin-bottom:12px; }
+  .plan { border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:10px; font-size:13px;
+          transition:border-color .15s; }
+  .plan.best { border:1.5px solid var(--green); background:var(--green-bg); }
+  .plan .head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .plan .label { font-weight:bold; font-size:14px; }
+  .plan .pay { font-size:16px; font-weight:800; color:var(--red); }
+  .plan .best-tag { color:var(--green); font-size:12px; font-weight:bold; margin-left:6px; }
+  .plan .detail { color:var(--muted); font-size:12px; margin-bottom:6px; }
+  .plan .save { color:var(--green); font-size:12px; font-weight:bold; }
+  .warn { margin-top:8px; background:var(--warn-bg); border:1px solid #fde68a;
+          border-radius:8px; padding:6px 10px; font-size:12px; color:#92400e; }
+  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:10px; }
+  .bar > div { height:100%; border-radius:4px;
+               background:linear-gradient(90deg,var(--amber),var(--red)); transition:width .4s; }
+  .empty { text-align:center; color:var(--muted); font-size:13px; padding:28px 0; }
+  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.9; }
   a { color:var(--red); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>🍟 麦麦省钱助手 · 在线试算</h1>
-    <p>券组合优化算法前端复刻 —— 选好想吃的，一键算出最优方案与凑单陷阱</p>
+    <div class="brand">🍟 麦麦省钱助手 · 在线试算</div>
+    <div class="sub">券组合优化算法前端复刻 —— 选好想吃的，一键算出最优方案与凑单陷阱</div>
   </header>
 
-  <div class="card">
-    <h2>① 选择想吃的（示例菜单）</h2>
-    <div class="items" id="menu"></div>
-  </div>
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h2>① 选择想吃的<span class="hint">点击卡片选中，可调数量</span></h2>
+        <div id="menu"></div>
+      </div>
+      <div class="card">
+        <h2>② 可用券<span class="hint">自动参与组合优化</span></h2>
+        <div id="coupons" class="coupons"></div>
+      </div>
+    </div>
 
-  <div class="card">
-    <h2>② 可用券（自动参与组合优化）</h2>
-    <div id="coupons" class="note" style="font-size:13px;color:var(--text)"></div>
+    <div class="sticky">
+      <div class="card">
+        <h2>③ 优化结果</h2>
+        <div class="actions">
+          <button class="calc" onclick="calc()">🧮 计算最优方案</button>
+          <button class="reset" onclick="reset()">重置</button>
+        </div>
+        <div id="baseline"></div>
+        <div id="result"><div class="empty">选好想吃的餐品后点击「计算最优方案」<br>凑单方案会自动标注陷阱提示</div></div>
+      </div>
+    </div>
   </div>
-
-  <button class="calc" onclick="calc()">🧮 计算最优方案</button>
-  <div id="result"></div>
 
   <footer>
     示例数据仅用于演示算法，实时菜单/价格/优惠以麦当劳官方 App 与 MCP 工具返回为准。<br>
@@ -62,13 +120,13 @@
 <script>
 // 与 scripts/optimizer.py 相同的示例数据与算法
 const MENU = [
-  {mealCode:"M1", name:"巨无霸", price:25.0},
-  {mealCode:"M2", name:"麦辣鸡腿堡", price:22.0},
-  {mealCode:"M3", name:"中薯条", price:12.0},
-  {mealCode:"M4", name:"中可乐", price:9.5},
-  {mealCode:"M5", name:"麦辣鸡腿堡三件套(堡+中薯+中可)", price:33.5},
-  {mealCode:"M6", name:"1+1随心配(任选两件)", price:13.5},
-  {mealCode:"M7", name:"脆薯饼", price:7.0},
+  {mealCode:"M1", name:"巨无霸", price:25.0, category:"汉堡"},
+  {mealCode:"M2", name:"麦辣鸡腿堡", price:22.0, category:"汉堡"},
+  {mealCode:"M3", name:"中薯条", price:12.0, category:"小食"},
+  {mealCode:"M7", name:"脆薯饼", price:7.0, category:"小食"},
+  {mealCode:"M4", name:"中可乐", price:9.5, category:"饮品"},
+  {mealCode:"M5", name:"麦辣鸡腿堡三件套(堡+中薯+中可)", price:33.5, category:"套餐"},
+  {mealCode:"M6", name:"1+1随心配(任选两件)", price:13.5, category:"套餐"},
 ];
 const COUPONS = [
   {couponId:"C3", title:"满30减6", threshold:30, discount:6},
@@ -76,50 +134,84 @@ const COUPONS = [
   {couponId:"C2", title:"满40减10", threshold:40, discount:10},
 ];
 const ADDON_LIMIT = 3;
+const ADDON_HINT = "仅当你本来就需要该商品才划算";
 
+// ---- 渲染菜单（按分类分组）----
 const menuEl = document.getElementById("menu");
-MENU.forEach(m => {
-  const div = document.createElement("label");
-  div.className = "item";
-  div.innerHTML = `<input type="checkbox" value="${m.mealCode}">
-    <span class="name">${m.name}</span>
-    <span class="price">¥${m.price.toFixed(2)}</span>
-    <input class="qty" type="number" min="1" value="1">`;
-  menuEl.appendChild(div);
+const categories = [...new Set(MENU.map(m => m.category))];
+categories.forEach(cat => {
+  const title = document.createElement("div");
+  title.className = "group-title";
+  title.textContent = cat;
+  menuEl.appendChild(title);
+  const grid = document.createElement("div");
+  grid.className = "items";
+  MENU.filter(m => m.category === cat).forEach(m => {
+    const card = document.createElement("div");
+    card.className = "item";
+    card.innerHTML = `
+      <div class="check">✓</div>
+      <div class="info">
+        <div class="name" title="${m.name}">${m.name}</div>
+        <div class="price">¥${m.price.toFixed(2)}</div>
+      </div>
+      <div class="stepper">
+        <button type="button" data-act="minus">−</button>
+        <span class="q">0</span>
+        <button type="button" data-act="plus">+</button>
+      </div>`;
+    const qtySpan = card.querySelector(".q");
+    const getQty = () => parseInt(qtySpan.textContent, 10);
+    const setQty = q => {
+      qtySpan.textContent = Math.max(0, q);
+      card.classList.toggle("on", getQty() > 0);
+    };
+    card.addEventListener("click", e => {
+      const act = e.target.dataset && e.target.dataset.act;
+      if (act === "plus") setQty(getQty() + 1);
+      else if (act === "minus") setQty(getQty() - 1);
+      else if (getQty() === 0) setQty(1);   // 点卡片即选中
+    });
+    card.dataset.code = m.mealCode;
+    grid.appendChild(card);
+  });
+  menuEl.appendChild(grid);
 });
-document.getElementById("coupons").innerHTML = COUPONS.map(c =>
-  `· ${c.title}（满 ${c.threshold} 减 ${c.discount}）`).join("<br>");
 
+document.getElementById("coupons").innerHTML =
+  COUPONS.map(c => `<span class="tag">${c.title}</span>`).join("") +
+  `<span class="tag">合计 ${COUPONS.length} 张</span>`;
+
+// ---- 工具函数（与 optimizer.py 同口径）----
 const priceOf = code => (MENU.find(m => m.mealCode === code) || {price:0}).price;
-const nameOf = code => (MENU.find(m => m.mealCode === code) || {name:code}).name;
+const nameOf  = code => (MENU.find(m => m.mealCode === code) || {name:code}).name;
+const faceOf  = entries => entries.reduce((s,e) => s + priceOf(e.mealCode) * e.quantity, 0);
 
 function selectedWants() {
   const wants = [];
-  document.querySelectorAll(".item").forEach(row => {
-    const cb = row.querySelector("input[type=checkbox]");
-    if (cb.checked) {
-      const qty = Math.max(1, parseInt(row.querySelector(".qty").value || "1", 10));
-      wants.push({mealCode: cb.value, quantity: qty});
-    }
+  document.querySelectorAll(".item").forEach(card => {
+    const qty = parseInt(card.querySelector(".q").textContent, 10);
+    if (qty > 0) wants.push({mealCode: card.dataset.code, quantity: qty});
   });
   return wants;
-}
-
-function faceOf(entries) {
-  return entries.reduce((s, e) => s + priceOf(e.mealCode) * e.quantity, 0);
 }
 
 function calc() {
   const wants = selectedWants();
   const resultEl = document.getElementById("result");
-  if (!wants.length) { resultEl.innerHTML = `<div class="plan note">请先勾选想吃的餐品。</div>`; return; }
-
+  const baselineEl = document.getElementById("baseline");
+  if (!wants.length) {
+    baselineEl.innerHTML = "";
+    resultEl.innerHTML = `<div class="plan note">请先勾选想吃的餐品。</div>`;
+    return;
+  }
   const baseFace = faceOf(wants);
   const baseline = baseFace; // 无券直点
+  baselineEl.innerHTML = `<div class="baseline"><span>购物车合计（无券直点）</span><b>¥${baseline.toFixed(2)}</b></div>`;
+
   const plans = [{label:"无券直点", entries:wants, note:"", payable:baseline}];
   const addons = MENU.filter(m => !wants.some(w => w.mealCode === m.mealCode))
                      .sort((a,b) => a.price - b.price).slice(0, ADDON_LIMIT);
-
   COUPONS.forEach(c => {
     if (c.threshold <= 0 || baseFace >= c.threshold) {
       plans.push({label:c.title, entries:wants, note:"", payable:Math.max(0, baseFace - c.discount)});
@@ -136,22 +228,33 @@ function calc() {
   });
 
   plans.sort((a,b) => a.payable - b.payable || a.entries.length - b.entries.length);
-  const best = plans[0].payable;
-  const maxSave = baseline - plans[plans.length-1].payable || 1;
+  const top = plans.slice(0, 4);
+  const bestPay = plans[0].payable;
 
-  resultEl.innerHTML = plans.slice(0, 4).map((p, i) => {
+  resultEl.innerHTML = top.map((p, i) => {
     const save = baseline - p.payable;
     const pct = baseline ? (save / baseline * 100) : 0;
     const detail = p.entries.map(e => `${nameOf(e.mealCode)}×${e.quantity}`).join(" + ");
+    const barW = save > 0 ? Math.max(6, (save / Math.max(1, baseline - top[0].payable)) * 100) : 4;
     return `<div class="plan ${i===0 ? "best" : ""}">
-      <div class="head"><span>${i+1}. ${p.label}</span>
-        <span>实付 ¥${p.payable.toFixed(2)} ${i===0 ? '<span class="best-tag">← 最优</span>' : ""}</span></div>
-      <div>${detail}</div>
-      <div class="note">较无券直点省 ¥${save.toFixed(2)}（${pct.toFixed(0)}%）</div>
-      ${p.note ? `<div class="note">⚠️ ${p.note}——仅当你本来就需要该商品才划算</div>` : ""}
-      <div class="bar"><div style="width:${Math.max(4, (baseline - p.payable) / (baseline - best || 1) * 100)}%"></div></div>
+      <div class="head"><span class="label">${i+1}. ${p.label}${i===0 ? '<span class="best-tag">★ 最优</span>' : ""}</span>
+        <span class="pay">¥${p.payable.toFixed(2)}</span></div>
+      <div class="detail">${detail}</div>
+      <div><span class="save">较无券直点省 ¥${save.toFixed(2)}（${pct.toFixed(0)}%）</span></div>
+      ${p.note ? `<div class="warn">⚠️ ${p.note}——${ADDON_HINT}</div>` : ""}
+      <div class="bar"><div style="width:${barW}%"></div></div>
     </div>`;
   }).join("");
+}
+
+function reset() {
+  document.querySelectorAll(".item").forEach(card => {
+    card.classList.remove("on");
+    card.querySelector(".q").textContent = "0";
+  });
+  document.getElementById("baseline").innerHTML = "";
+  document.getElementById("result").innerHTML =
+    `<div class="empty">选好想吃的餐品后点击「计算最优方案」<br>凑单方案会自动标注陷阱提示</div>`;
 }
 </script>
 </body>
