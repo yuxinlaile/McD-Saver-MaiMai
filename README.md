@@ -48,6 +48,7 @@
 - [常见问题](#常见问题)
 - [测试方式](#测试方式)
 - [贡献指南](#贡献指南)
+- [Star History](#star-history)
 - [许可证](#许可证)
 
 ## 项目简介
@@ -186,6 +187,7 @@ maimai-saver/
 ├── SKILL.md                            # Agent Skill 入口：省钱方法论与调用规范
 ├── README.md / README_EN.md            # 项目说明（中/英）
 ├── CHANGELOG.md                        # 版本变更记录
+├── CONTRIBUTING.md                     # 贡献指南（参与方式/PR 流程/合规红线）
 ├── LICENSE                             # MIT + 第三方条款声明
 ├── CONTEST_DECLARATION.md              # 参赛声明（官方原文，未改动）
 ├── MCP_INTEGRATION.md                  # MCP 集成说明：Server/Tool/调用流程/业务价值
@@ -459,6 +461,7 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检�
 
 欢迎通过 Issue / PR 参与：工作流文档、中英文档校对、工具目录更新
 （麦当劳 MCP 版本迭代较快，以 `tools` 子命令的实时结果为准）。
+完整流程与规范见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
 - Issue 模板：Bug 报告、功能建议（`.github/ISSUE_TEMPLATE/`）
 - PR 模板：`.github/PULL_REQUEST_TEMPLATE.md`（含自检清单）
@@ -470,6 +473,16 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检�
 2. 未包含任何真实 Token、密码或个人凭证；
 3. 涉及工具目录/工作流的变更已同步更新 `references/` 与 `SKILL.md`；
 4. 用户可见变更已在 `CHANGELOG.md` 补充说明。
+
+## Star History
+
+觉得有用的话，点个 ⭐ 让更多麦门同仁看到：
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/maimai-saver&type=Date)](https://star-history.com/#yuxinlaile/maimai-saver&Date)
+
+</div>
 
 ## 许可证
 
