@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-49%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-75%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -89,8 +89,12 @@
 - **Agent Skill 化**：`SKILL.md` 提供触发词、省钱工作流与调用规范
   （先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠 / 比价透明）
 - **安全设计**：Token 支持环境变量/文件/参数三通道解析，绝不输出到日志
-- **测试保障**：49 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
-  比价折算决策与 CLI 退出码
+- **组合优化**：内置券组合优化器，枚举「无券直点/单券/凑单达标」候选方案，
+  `--mcp` 模式经官方 calculate-price 逐方案真实计价，凑单以「不凑单」为基准并强制标注提示
+- **沉默成本体检**：临期券面值合计 + 历史订单消费画像（客单价/高频单品）+ 积分临期提醒，
+  回答「你正在白扔多少钱」
+- **测试保障**：75 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
+  比价折算决策、组合优化与 CLI 退出码
 
 ## 工具能力总览
 
@@ -130,6 +134,14 @@
 | Agent / 效率工具玩家 | 将本仓库作为 Agent Skill（WorkBuddy / Claude Code 等）直接加载 |
 
 ## 效果预览
+
+在线试算（免登录）：<https://yuxinlaile.github.io/maimai-saver/demo.html>
+
+券组合优化（`optimizer.py` 实际输出）：
+
+<div align="center">
+<img src="docs/assets/optimizer-report.svg" alt="券组合优化输出示例" width="720" />
+</div>
 
 全渠道比价报告（`deal_compare.py compare` 实际输出）：
 
@@ -176,10 +188,13 @@ maimai-saver/
 ├── requirements-dev.txt                # 开发/测试依赖（pytest）
 ├── config/
 │   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
+├── install.ps1                       # Windows 一键安装脚本（备份旧版，不碰 Token）
 ├── scripts/
 │   ├── mcd_client.py                   # MCP Streamable HTTP 客户端核心（纯标准库）
 │   ├── mcd.py                          # CLI 入口：check / tools / schema / call
-│   └── deal_compare.py                 # 全渠道比价引擎（美团/抖音券手动录入）
+│   ├── deal_compare.py                 # 全渠道比价引擎（美团/抖音券手动录入）
+│   ├── optimizer.py                    # 券组合优化器（估算/--mcp 真实计价双模式）
+│   └── silent_cost.py                  # 沉默成本体检（临期券/消费画像/积分）
 ├── references/
 │   ├── tools.md                        # 35 个工具完整目录
 │   ├── money-saving-strategies.md      # 十一大省钱策略详解（核心参考）
@@ -189,8 +204,10 @@ maimai-saver/
 │   └── error-handling.md               # 错误码、重试策略与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 完整省钱点餐示例会话
-├── docs/assets/                        # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（49 个用例）
+├── docs/
+│   ├── demo.html                       # GitHub Pages 在线试算器（免登录）
+│   └── assets/                         # README 预览图（SVG）
+├── tests/                              # pytest 单元测试（75 个用例）
 └── .github/                            # CI + Issue/PR 模板
 ```
 
@@ -308,6 +325,29 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 
 退出码：`0` 成功 · `1` 用法/数据错误 · `2` 券库为空。
 
+### optimizer.py（券组合优化）
+
+```bash
+# 估算模式（本地计价，输出标注「未经验证」）
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json
+# 真实计价模式（官方 calculate-price 逐方案核价，可作下单依据；需 --store-code）
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
+    --mcp --store-code ST00123
+python scripts/optimizer.py demo        # 离线演示
+```
+
+数据文件格式与各字段获取方式见脚本 docstring 与 SKILL.md 工作流 5。
+
+### silent_cost.py（沉默成本体检）
+
+```bash
+python scripts/mcd.py call query-my-coupons --raw > coupons.json
+python scripts/mcd.py call order-list --raw > orders.json
+python scripts/mcd.py call query-my-account --raw > points.json
+python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
+python scripts/silent_cost.py demo      # 离线演示
+```
+
 ## 配置说明
 
 ### 配置文件
@@ -377,7 +417,12 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 新开 Agent 会话输入显式调用命令（如 `/maimai-saver`）确认技能被识别；再执行
 `python scripts/mcd.py check` 验证 MCP 连通性。
 
-**Q9：麦当劳 MCP 的使用限制？**
+**Q9：optimizer 的估算模式和 --mcp 真实计价模式有什么区别？**
+估算模式用菜单价格与券 threshold/discount 字段本地计算，输出标注「未经验证」，仅用于
+快速比较；--mcp 模式调用官方 calculate-price 逐方案核价（含配送费与全部叠加规则），
+结果才能作为下单依据。下单前仍须按 SKILL.md 规范用 calculate-price 复核并向你确认。
+
+**Q10：麦当劳 MCP 的使用限制？**
 仅限中国大陆地区（不含港澳台）、个人非商业用途；须遵守麦当劳中国《使用条款》
 与《麦当劳 MCP 服务规则》，详见[免责声明](#免责声明)。
 
@@ -387,7 +432,7 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 # 语法检查（与 CI 一致）
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# 安装开发依赖并运行单元测试（49 个用例，不发起网络请求）
+# 安装开发依赖并运行单元测试（75 个用例，不发起网络请求）
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

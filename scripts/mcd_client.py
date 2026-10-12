@@ -66,8 +66,8 @@ DEFAULT_TOKEN_FILE = "~/.mcd_mcp_token"
 # MCP 协议版本（Streamable HTTP 传输规范）
 PROTOCOL_VERSION = "2025-03-26"
 
-CLIENT_INFO = {"name": "maimai-saver", "version": "1.2.1"}
-USER_AGENT = "maimai-saver/1.2.1"
+CLIENT_INFO = {"name": "maimai-saver", "version": "1.3.0"}
+USER_AGENT = "maimai-saver/1.3.0"
 
 
 # ---------------------------------------------------------------------------

@@ -18,7 +18,7 @@ redemption evaluation. Every quote comes with a savings breakdown
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-49%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-75%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -104,8 +104,13 @@ The project ships three components:
   ("query before write / confirm before ordering / always run the savings check /
   never fabricate discounts / transparent comparisons")
 - **Secure by design**: token resolved from CLI arg / env var / file, never logged
-- **Tested**: 49 unit tests covering SSE parsing, token resolution, backoff
-  math, comparison decisions and CLI exit codes
+- **Combination optimizer**: enumerates "no-coupon / single-coupon / add-on
+  threshold" candidate plans; `--mcp` mode verifies every plan with the official
+  calculate-price, with no-add-on as the baseline and mandatory add-on caveats
+- **Silent-cost check**: expiring-coupon face-value total + order-history profile
+  (avg ticket / repeat items) + points expiry — answers "how much are you throwing away?"
+- **Tested**: 75 unit tests covering SSE parsing, token resolution, backoff math,
+  comparison decisions, combination optimization and CLI exit codes
 
 ## Tool coverage
 
@@ -145,6 +150,14 @@ Full catalog and usage notes: [`references/tools.md`](references/tools.md).
 | Agent / productivity tinkerers | Load the repo as an Agent Skill (WorkBuddy, Claude Code, ...) |
 
 ## Sample output
+
+Try it online (no sign-in): <https://yuxinlaile.github.io/maimai-saver/demo.html>
+
+Coupon combination optimization (`optimizer.py`):
+
+<div align="center">
+<img src="docs/assets/optimizer-report.svg" alt="Coupon combination optimization sample" width="720" />
+</div>
 
 Cross-channel comparison report (`deal_compare.py compare`):
 
@@ -191,10 +204,13 @@ maimai-saver/
 ├── requirements-dev.txt                # Dev/test dependencies (pytest)
 ├── config/
 │   └── mcp.example.json                # MCP client config example
+├── install.ps1                       # One-click Windows installer (backs up, no token touch)
 ├── scripts/
 │   ├── mcd_client.py                   # MCP Streamable HTTP client (stdlib only)
 │   ├── mcd.py                          # CLI: check / tools / schema / call
-│   └── deal_compare.py                 # Cross-channel comparison engine
+│   ├── deal_compare.py                 # Cross-channel comparison engine
+│   ├── optimizer.py                    # Coupon combination optimizer (estimate / --mcp modes)
+│   └── silent_cost.py                  # Silent-cost check (coupons/orders/points)
 ├── references/
 │   ├── tools.md                        # Catalog of all 35 tools
 │   ├── money-saving-strategies.md      # 11 saving strategies (core reference)
@@ -204,8 +220,10 @@ maimai-saver/
 │   └── error-handling.md               # Errors, retries & troubleshooting
 ├── examples/
 │   └── order-flow-example.md           # Full annotated ordering session
-├── docs/assets/                        # README preview images (SVG)
-├── tests/                              # pytest unit tests (49 cases)
+├── docs/
+│   ├── demo.html                       # GitHub Pages online calculator (no sign-in)
+│   └── assets/                         # README preview images (SVG)
+├── tests/                              # pytest unit tests (75 cases)
 └── .github/                            # CI + Issue/PR templates
 ```
 
@@ -328,6 +346,29 @@ python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
 
 Exit codes: `0` ok · `1` usage/data error · `2` empty deal library.
 
+### optimizer.py (coupon combination optimization)
+
+```bash
+# Estimate mode (local pricing, output marked "unverified")
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json
+# Real pricing mode (official calculate-price per plan; requires --store-code)
+python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
+    --mcp --store-code ST00123
+python scripts/optimizer.py demo        # offline demo
+```
+
+Data file formats are documented in the script docstring and SKILL.md workflow 5.
+
+### silent_cost.py (silent-cost check)
+
+```bash
+python scripts/mcd.py call query-my-coupons --raw > coupons.json
+python scripts/mcd.py call order-list --raw > orders.json
+python scripts/mcd.py call query-my-account --raw > points.json
+python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
+python scripts/silent_cost.py demo      # offline demo
+```
+
 ## Configuration
 
 ### Config files
@@ -400,7 +441,14 @@ Install locations: [Option B](#option-b-install-as-an-agent-skill).
 Start a new agent session and invoke it explicitly (e.g. `/maimai-saver`), then
 run `python scripts/mcd.py check` to verify MCP connectivity.
 
-**Q9: Usage restrictions of the McDonald's MCP?**
+**Q9: Estimate mode vs --mcp real pricing in optimizer?**
+Estimate mode computes locally from menu prices and coupon threshold/discount fields,
+marked "unverified" — for quick comparison only. `--mcp` mode calls the official
+calculate-price for every plan (delivery fee and stacking rules included) and is the
+only mode whose result can guide an order. Before ordering, SKILL.md still requires a
+calculate-price re-check and your explicit confirmation.
+
+**Q10: Usage restrictions of the McDonald's MCP?**
 Mainland China only (excluding Hong Kong, Macao and Taiwan), personal
 non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disclaimer).
 
@@ -410,7 +458,7 @@ non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disc
 # Syntax check (same as CI)
 python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
 
-# Install dev dependencies and run unit tests (49 cases, no network required)
+# Install dev dependencies and run unit tests (75 cases, no network required)
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

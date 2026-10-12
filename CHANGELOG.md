@@ -3,6 +3,27 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式，
 版本号遵循语义化版本（SemVer）。
 
+## [1.3.0] - 2026-10-12
+
+### Added
+- 券组合优化器 `scripts/optimizer.py`：确定性枚举「无券直点 / 单券 /
+  凑单达标」候选方案，输出最优组合与 Top-N 备选；计价可插拔——估算模式
+  （本地价格表）或 `--mcp` 真实计价模式（官方 calculate-price 逐方案核价）；
+  凑单方案强制标注"仅当你本来就需要该商品才划算"，并以"不凑单"为基准排序
+- 沉默成本体检 `scripts/silent_cost.py`：临期券扫描（7 天内到期按面值合计）+
+  消费画像（订单数/总支出/客单价/高频复购单品）+ 积分体检（可用与即将过期），
+  字段宽容匹配、识别不到明确标注"未识别"
+- GitHub Pages 在线试算器 `docs/demo.html`：optimizer 算法前端复刻 + 内嵌示例
+  数据，免登录免 Token 开箱即验
+- `install.ps1`：Windows 一键安装脚本（备份旧版本，不触碰 Token 与连接器）
+- 预览图 `docs/assets/optimizer-report.svg`；单元测试 49 → 75（新增优化器与
+  体检模块用例）
+
+### Changed
+- SKILL.md：工具地图与标准工作流新增"最优组合点单"与"沉默成本体检"两条
+  工作流；版本号升至 1.3.0
+- README（中英）：核心功能、运行与命令、目录结构、效果预览同步更新
+
 ## [1.2.1] - 2026-10-10
 
 ### Added
