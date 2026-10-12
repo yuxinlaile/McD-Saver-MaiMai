@@ -17,7 +17,7 @@ redemption evaluation. Every quote comes with a savings breakdown
 (list price / discount / payable / saved).
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.3.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.3.0)
+[![Release](https://img.shields.io/badge/Release-v1.4.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.4.2)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-89%20passed-brightgreen)
@@ -157,7 +157,7 @@ Try it online (no sign-in): <https://yuxinlaile.github.io/maimai-saver/demo.html
 
 The demo page ships with 31 menu items (7 categories, incl. breakfast), 9 coupons,
 6 Meituan/Douyin group-buy deals, a cross-channel final recommendation, and
-**one-click real-menu import** — paste the raw MCP `get-menu` output to replace
+**one-click real-menu import** — paste the raw MCP `query-meals` output to replace
 the sample data wholesale, the compliant way to sync the full official menu.
 
 Coupon combination optimization (`optimizer.py`):
@@ -211,10 +211,10 @@ maimai-saver/
 ├── requirements-dev.txt                # Dev/test dependencies (pytest)
 ├── config/
 │   └── mcp.example.json                # MCP client config example
-├── install.ps1                       # One-click Windows installer (backs up, no token touch)
+├── install.ps1                         # One-click Windows installer (backs up, no token touch)
 ├── scripts/
 │   ├── mcd_client.py                   # MCP Streamable HTTP client (stdlib only)
-│   ├── mcd.py                          # CLI: check / tools / schema / call
+│   ├── mcd.py                          # CLI: check / tools / schema / call / claim
 │   ├── deal_compare.py                 # Cross-channel comparison engine
 │   ├── optimizer.py                    # Coupon combination optimizer (estimate / --mcp modes)
 │   └── silent_cost.py                  # Silent-cost check (coupons/orders/points)
@@ -474,7 +474,7 @@ non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disc
 
 ```bash
 # Syntax check (same as CI)
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py
+python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py
 
 # Install dev dependencies and run unit tests (89 cases, no network required)
 pip install -r requirements-dev.txt
@@ -492,6 +492,7 @@ is authoritative).
 
 - Issue templates: bug report, feature request (`.github/ISSUE_TEMPLATE/`)
 - PR template: `.github/PULL_REQUEST_TEMPLATE.md` (with a self-check list)
+- Usage questions / deal-data sharing: [Discussions](https://github.com/yuxinlaile/maimai-saver/discussions) (enabled)
 
 Before submitting:
 
