@@ -13,7 +13,7 @@
 每一次报价都附带省钱明细（原价 / 优惠 / 实付 / 节省比例）。
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.4.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.4.2)
+[![Release](https://img.shields.io/badge/Release-v1.5.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.5.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-98%20passed-brightgreen)
