@@ -4,13 +4,25 @@
 
 <img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
 
-**让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
+**同一份麦辣三件套，单点 ¥46.5、用券 ¥33.5、找对团购更低——差的这 ¥13，让确定性算法替你算清楚，顺手找回你正在过期的券。**
 
 基于麦当劳中国官方 MCP Server（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server) 集成指南）构建，
 覆盖门店、菜单、点餐、订单、优惠券、积分商城、抽奖、主题活动等 **35 个官方工具**。
 
+<div align="center">
+
+| 🍟 单次点餐实省 | 💸 过期券找回 | 🧮 计价方式 | 🔥 营养约束 | 🎮 免 Token 体验 |
+|:---:|:---:|:---:|:---:|:---:|
+| **¥6 ~ ¥13/单** | **一次几十元** | 官方 calculate-price 逐方案核价 | 预算/热量/蛋白/钠 | [在线试算](https://yuxinlaile.github.io/maimai-saver/demo.html) · [离线 demo](#运行与命令) |
+
+</div>
+
 **核心方法论**：每次下单前自动执行 **领券 → 选券 → 比价 → 积分抵扣评估** 四步省钱检查，
 每一次报价都附带省钱明细（原价 / 优惠 / 实付 / 节省比例）。
+
+**🍟 30 秒体验（无需 Token、不联网）**：
+[在线试算页](https://yuxinlaile.github.io/maimai-saver/demo.html)（免登录，支持一键导入真实菜单）·
+`git clone` 后运行 `python scripts/optimizer.py demo`（纯离线）
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
 [![Release](https://img.shields.io/badge/Release-v1.5.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.5.0)
