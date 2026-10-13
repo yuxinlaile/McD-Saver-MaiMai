@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式，
 版本号遵循语义化版本（SemVer）。
 
+## [1.5.0] - 2026-10-13
+
+### Added
+- optimizer.py：**营养约束**——`--min-protein`（蛋白质下限，g）与
+  `--max-sodium`（钠上限，mg），配合菜单条目的 `protein`/`sodium` 字段
+  （来自 list-nutrition-foods）生效；违规方案排后并如实标注
+  「蛋白质不足 xx g / 超钠 xx mg」；**营养数据缺失的方案按不满足处理**
+  并标注「蛋白质未知」——延续"算不出如实披露"原则，绝不虚构达标。
+  健身增肌与控盐人群场景（借鉴 mcd-order-calories 的营养口径思路）
+- demo.html 页脚增加 GitHub Star 引导链接
+- 单元测试 89 → 98（新增营养约束用例：达标不打标 / 不足排后 /
+  数据缺失保守处理 / 组合约束排序 / 报告文案）
+
 ## [1.4.2] - 2026-10-12
 
 ### Added
