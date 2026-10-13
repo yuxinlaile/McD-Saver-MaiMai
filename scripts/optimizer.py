@@ -91,9 +91,14 @@ class Plan:
         self.note = note
         self.payable: Optional[float] = None
         self.kcal: Optional[float] = None
+        self.protein: Optional[float] = None
+        self.sodium: Optional[float] = None
         self.valid = True
         self.over_budget = False
         self.over_kcal = False
+        self.under_protein = False
+        self.protein_unknown = False
+        self.over_sodium = False
 
     @property
     def label(self) -> str:
@@ -220,16 +225,22 @@ def score_and_rank(
     budget: Optional[float] = None,
     max_kcal: Optional[float] = None,
     kcal_table: Optional[Dict[str, float]] = None,
+    min_protein: Optional[float] = None,
+    max_sodium: Optional[float] = None,
+    nutrition_table: Optional[Dict[str, Dict[str, float]]] = None,
 ) -> Dict[str, Any]:
-    """计价并排序；支持可选约束：实付预算与热量上限。
+    """计价并排序；支持可选约束：实付预算、热量上限、蛋白质下限、钠上限。
 
     违反约束的方案不删除，而是排到满足约束的方案之后并打标——
-    用户能看到"差多少"，而不是被静默过滤。
+    用户能看到"差多少"，而不是被静默过滤。蛋白质数据缺失时如实标注
+    「蛋白质未知」并按不满足处理（保守排序，绝不虚构达标）。
     """
     for plan in plans:
         plan.payable = price_fn(plan.cart, plan.coupon)
         plan.valid = plan.payable is not None
         plan.kcal = None
+        plan.protein = None
+        plan.sodium = None
         if kcal_table and plan.valid:
             kcal = sum(
                 kcal_table.get(e["mealCode"], 0.0) * e["quantity"] for e in plan.cart.entries
@@ -239,9 +250,35 @@ def score_and_rank(
                 plan.over_kcal = plan.kcal > max_kcal
         if budget is not None and plan.payable is not None:
             plan.over_budget = plan.payable > budget
+        if nutrition_table and plan.valid:
+            protein = 0.0
+            sodium = 0.0
+            complete = True
+            for e in plan.cart.entries:
+                info = nutrition_table.get(e["mealCode"])
+                if not info or info.get("protein") is None or info.get("sodium") is None:
+                    complete = False
+                    break
+                protein += float(info["protein"]) * e["quantity"]
+                sodium += float(info["sodium"]) * e["quantity"]
+            if complete:
+                plan.protein = protein
+                plan.sodium = sodium
+        if min_protein is not None:
+            if plan.protein is None:
+                plan.under_protein = True
+                plan.protein_unknown = True
+            else:
+                plan.under_protein = plan.protein < min_protein
+        if max_sodium is not None:
+            if plan.sodium is None:
+                plan.over_sodium = True  # 钠数据缺失同样按不满足处理
+            else:
+                plan.over_sodium = plan.sodium > max_sodium
 
     def sort_key(plan: Plan) -> Tuple[float, float, int]:
-        violates = (1 if plan.over_budget else 0) + (1 if plan.over_kcal else 0)
+        violates = ((1 if plan.over_budget else 0) + (1 if plan.over_kcal else 0)
+                    + (1 if plan.under_protein else 0) + (1 if plan.over_sodium else 0))
         return (violates, plan.payable or 0.0, plan.cart.item_count())
 
     valid = [p for p in plans if p.valid]
@@ -252,7 +289,8 @@ def score_and_rank(
 
     ranked = sorted(valid, key=sort_key)[: max(1, top)]
     return {"baseline": baseline, "ranked": ranked, "invalid": len(plans) - len(valid),
-            "budget": budget, "max_kcal": max_kcal}
+            "budget": budget, "max_kcal": max_kcal,
+            "min_protein": min_protein, "max_sodium": max_sodium}
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +316,10 @@ def render_report(result: Dict[str, Any], mode_label: str) -> str:
         lines.append("预算上限：{0}".format(_fmt(result["budget"])))
     if result.get("max_kcal") is not None:
         lines.append("热量上限：{0:.0f} kcal".format(result["max_kcal"]))
+    if result.get("min_protein") is not None:
+        lines.append("蛋白质下限：{0:.0f} g".format(result["min_protein"]))
+    if result.get("max_sodium") is not None:
+        lines.append("钠上限：{0:.0f} mg".format(result["max_sodium"]))
     lines.append("")
     lines.append("方案排名：")
     for idx, plan in enumerate(ranked, 1):
@@ -289,10 +331,20 @@ def render_report(result: Dict[str, Any], mode_label: str) -> str:
             flags.append("超预算 {0}".format(_fmt((plan.payable or 0) - (result["budget"] or 0))))
         if plan.over_kcal:
             flags.append("超热量 {0:.0f} kcal".format((plan.kcal or 0) - (result["max_kcal"] or 0)))
+        if plan.under_protein:
+            if plan.protein_unknown:
+                flags.append("蛋白质未知（菜单缺 nutrition 数据）")
+            else:
+                flags.append("蛋白质不足 {0:.0f} g".format((result["min_protein"] or 0) - (plan.protein or 0)))
+        if plan.over_sodium:
+            flags.append("超钠 {0:.0f} mg".format((plan.sodium or 0) - (result["max_sodium"] or 0)))
         lines.append("  {0}. {1}".format(idx, plan.label))
         kcal_part = " ｜ 热量 {0:.0f} kcal".format(plan.kcal) if plan.kcal is not None else ""
-        lines.append("     实付 {0}{1} ｜ 省 {2}（{3:.0f}%）{4}".format(
-            _fmt(plan.payable), kcal_part, _fmt(saving), ratio, mark))
+        nutri_part = ""
+        if plan.protein is not None:
+            nutri_part = " ｜ 蛋白 {0:.0f} g ｜ 钠 {1:.0f} mg".format(plan.protein, plan.sodium or 0)
+        lines.append("     实付 {0}{1}{2} ｜ 省 {3}（{4:.0f}%）{5}".format(
+            _fmt(plan.payable), kcal_part, nutri_part, _fmt(saving), ratio, mark))
         if flags:
             lines.append("     ⚠️ {0}".format("；".join(flags)))
         if plan.note:
@@ -311,14 +363,21 @@ def render_report(result: Dict[str, Any], mode_label: str) -> str:
 DEMO_MENU = {
     "storeCode": "DEMO01", "orderType": 1,
     "items": [
-        {"mealCode": "M1", "name": "巨无霸", "price": 25.0, "category": "汉堡", "kcal": 550},
-        {"mealCode": "M2", "name": "麦辣鸡腿堡", "price": 22.0, "category": "汉堡", "kcal": 520},
-        {"mealCode": "M3", "name": "中薯条", "price": 12.0, "category": "小食", "kcal": 330},
-        {"mealCode": "M4", "name": "中可乐", "price": 9.5, "category": "饮品", "kcal": 210},
+        {"mealCode": "M1", "name": "巨无霸", "price": 25.0, "category": "汉堡", "kcal": 550,
+         "protein": 25.0, "sodium": 1010.0},
+        {"mealCode": "M2", "name": "麦辣鸡腿堡", "price": 22.0, "category": "汉堡", "kcal": 520,
+         "protein": 22.0, "sodium": 1130.0},
+        {"mealCode": "M3", "name": "中薯条", "price": 12.0, "category": "小食", "kcal": 330,
+         "protein": 4.0, "sodium": 270.0},
+        {"mealCode": "M4", "name": "中可乐", "price": 9.5, "category": "饮品", "kcal": 210,
+         "protein": 0.0, "sodium": 10.0},
         {"mealCode": "M5", "name": "麦辣鸡腿堡三件套(堡+中薯+中可)", "price": 33.5,
-         "category": "套餐", "kcal": 940, "contains": ["M2", "M3", "M4"]},
-        {"mealCode": "M6", "name": "1+1随心配(任选两件)", "price": 13.5, "category": "套餐", "kcal": 480},
-        {"mealCode": "M7", "name": "脆薯饼", "price": 7.0, "category": "小食", "kcal": 280},
+         "category": "套餐", "kcal": 940, "contains": ["M2", "M3", "M4"],
+         "protein": 26.0, "sodium": 1410.0},
+        {"mealCode": "M6", "name": "1+1随心配(任选两件)", "price": 13.5, "category": "套餐", "kcal": 480,
+         "protein": 15.0, "sodium": 860.0},
+        {"mealCode": "M7", "name": "脆薯饼", "price": 7.0, "category": "小食", "kcal": 280,
+         "protein": 2.0, "sodium": 340.0},
     ],
 }
 DEMO_WANTS = [{"mealCode": "M5", "name": "麦辣鸡腿堡三件套", "quantity": 1}]
@@ -355,6 +414,10 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--top", type=int, default=3, help="输出前 N 个方案（默认 3）")
     plan.add_argument("--budget", type=float, default=None, help="实付预算上限（元），超支方案排后并打标")
     plan.add_argument("--max-kcal", type=float, default=None, help="热量上限（kcal），菜单含 kcal 字段时生效")
+    plan.add_argument("--min-protein", type=float, default=None,
+                      help="蛋白质下限（g），菜单含 protein 字段时生效；数据缺失的方案按不满足处理")
+    plan.add_argument("--max-sodium", type=float, default=None,
+                      help="钠上限（mg），菜单含 sodium 字段时生效；数据缺失的方案按不满足处理")
     plan.add_argument("--json", dest="as_json", action="store_true", help="JSON 输出")
 
     sub.add_parser("demo", help="离线演示（内嵌示例数据，估算模式）")
@@ -395,10 +458,18 @@ def run_plan(args: argparse.Namespace) -> int:
     plans = build_candidates(wants, coupons, menu)
     kcal_table = {i["mealCode"]: float(i["kcal"]) for i in menu.get("items", [])
                   if isinstance(i.get("kcal"), (int, float))}
+    nutrition_table = {
+        i["mealCode"]: {"protein": i["protein"], "sodium": i["sodium"]}
+        for i in menu.get("items", [])
+        if isinstance(i.get("protein"), (int, float)) and isinstance(i.get("sodium"), (int, float))
+    }
     result = score_and_rank(plans, price_fn, top=args.top,
                             budget=args.budget,
                             max_kcal=args.max_kcal if kcal_table else None,
-                            kcal_table=kcal_table or None)
+                            kcal_table=kcal_table or None,
+                            min_protein=args.min_protein if nutrition_table else None,
+                            max_sodium=args.max_sodium if nutrition_table else None,
+                            nutrition_table=nutrition_table or None)
 
     if args.as_json:
         print(json.dumps({
@@ -407,6 +478,7 @@ def run_plan(args: argparse.Namespace) -> int:
             "plans": [
                 {"label": p.label, "payable": p.payable, "note": p.note,
                  "saving": (result["baseline"] - p.payable) if result["baseline"] and p.payable else None,
+                 "kcal": p.kcal, "protein": p.protein, "sodium": p.sodium,
                  "cart": p.cart.entries}
                 for p in result["ranked"]
             ],
