@@ -4,17 +4,29 @@
 
 <img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
 
-**Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
+**The same McCombo costs ¥46.5 à la carte, ¥33.5 with the right coupon, even less with a group-buy — let a deterministic algorithm find the gap, and reclaim the coupons expiring in your wallet.**
 
 Built on McDonald's China official MCP Server (integration guide:
 [M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)), covering
 **35 official tools** across stores, menus, ordering, orders, coupons, points
 mall, lottery and themed events.
 
+<div align="center">
+
+| 🍟 Saved per order | 💸 Expiring coupons | 🧮 Pricing | 🔥 Nutrition caps | 🎮 No-token demo |
+|:---:|:---:|:---:|:---:|:---:|
+| **¥6 ~ ¥13** | **tens of ¥ at once** | official calculate-price per plan | budget/kcal/protein/sodium | [Online demo](https://yuxinlaile.github.io/maimai-saver/demo.html) · [Offline](#usage-and-commands) |
+
+</div>
+
 **Core methodology**: before every order, a mandatory **4-step money-saving
 check** — claim coupons → pick coupons → dual-price comparison → points
 redemption evaluation. Every quote comes with a savings breakdown
 (list price / discount / payable / saved).
+
+**🍟 30-second start (no token, no network)**:
+[online calculator](https://yuxinlaile.github.io/maimai-saver/demo.html) (no sign-in, one-click real-menu import) ·
+`git clone` then `python scripts/optimizer.py demo` (fully offline)
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
 [![Release](https://img.shields.io/badge/Release-v1.5.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.5.0)
