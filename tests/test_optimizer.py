@@ -152,3 +152,98 @@ class TestConstraints:
     def test_swap_skipped_when_combo_is_want(self):
         plans = build_candidates([{"mealCode": "M"}], [], self.MENU_KCAL)
         assert all(not p.note.startswith("改点套餐") for p in plans)
+
+
+class TestNutritionConstraints:
+    """v1.5.0 新增：蛋白质下限与钠上限约束。"""
+
+    MENU_NUTRI = {"items": [
+        {"mealCode": "A", "name": "主餐", "price": 25.0, "kcal": 550,
+         "protein": 25.0, "sodium": 1010.0},
+        {"mealCode": "B", "name": "高蛋白小食", "price": 12.0, "kcal": 330,
+         "protein": 20.0, "sodium": 300.0},
+        {"mealCode": "C", "name": "低钠小食", "price": 12.0, "kcal": 200,
+         "protein": 5.0, "sodium": 100.0},
+        {"mealCode": "N", "name": "无营养数据单品", "price": 10.0},
+    ]}
+    NUTRI = {"A": {"protein": 25.0, "sodium": 1010.0},
+             "B": {"protein": 20.0, "sodium": 300.0},
+             "C": {"protein": 5.0, "sodium": 100.0}}
+
+    def test_protein_and_sodium_computed_per_plan(self):
+        plans = build_candidates(WANTS, [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                nutrition_table=self.NUTRI)
+        top = result["ranked"][0]
+        assert top.protein == 25.0 and top.sodium == 1010.0
+
+    def test_min_protein_satisfied_not_flagged(self):
+        plans = build_candidates(WANTS, [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                min_protein=20.0, nutrition_table=self.NUTRI)
+        assert all(not p.under_protein for p in result["ranked"])
+
+    def test_min_protein_deficient_ranked_last_and_flagged(self):
+        # wants=低蛋白小食 C（蛋白 5g < 下限 20g）→ 违规排后并打标
+        plans = build_candidates([{"mealCode": "C"}], [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                min_protein=20.0, nutrition_table=self.NUTRI)
+        assert result["ranked"][0].under_protein
+
+    def test_unknown_protein_counts_as_violation(self):
+        # 菜单缺 N 的营养数据 → 含 N 的方案「蛋白质未知」，按不满足处理
+        plans = build_candidates([{"mealCode": "N"}], [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                min_protein=5.0, nutrition_table=self.NUTRI)
+        assert result["ranked"][0].under_protein
+        assert result["ranked"][0].protein_unknown
+
+    def test_over_sodium_ranked_last_and_flagged(self):
+        # wants=A（钠 1010mg > 上限 800mg）→ 违规打标
+        plans = build_candidates(WANTS, [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                max_sodium=800.0, nutrition_table=self.NUTRI)
+        assert result["ranked"][0].over_sodium
+
+    def test_sodium_within_limit_not_flagged(self):
+        plans = build_candidates([{"mealCode": "C"}], [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                max_sodium=800.0, nutrition_table=self.NUTRI)
+        assert not result["ranked"][0].over_sodium
+
+    def test_combined_violations_rank_after_clean(self):
+        # A 超钠且达蛋白；C 蛋白不足但钠达标 → 干净方案（B）排最前
+        wants = [{"mealCode": "A"}]
+        menu = dict(self.MENU_NUTRI)
+        menu["items"] = self.MENU_NUTRI["items"] + [
+            {"mealCode": "B2", "name": "均衡替代", "price": 24.0, "kcal": 400,
+             "protein": 22.0, "sodium": 500.0},
+        ]
+        nutri = dict(self.NUTRI)
+        nutri["B2"] = {"protein": 22.0, "sodium": 500.0}
+        plans = build_candidates(wants, [], menu)
+        # 加入 B2 的"改点套餐"式候选不存在，直接构造多方案：手工加一个 B2 直点
+        from optimizer import Cart as C, Plan as P
+        plans.append(P(C([{"mealCode": "B2", "quantity": 1}]), None, note="均衡替代"))
+        result = score_and_rank(plans, make_local_pricer(menu),
+                                min_protein=20.0, max_sodium=800.0,
+                                nutrition_table=nutri)
+        assert result["ranked"][0].payable == 24.0
+        assert not result["ranked"][0].under_protein and not result["ranked"][0].over_sodium
+
+    def test_report_mentions_nutrition_flags(self, capsys):
+        from optimizer import render_report
+        plans = build_candidates([{"mealCode": "C"}], [], self.MENU_NUTRI)
+        result = score_and_rank(plans, make_local_pricer(self.MENU_NUTRI),
+                                min_protein=20.0, nutrition_table=self.NUTRI)
+        text = render_report(result, "估算模式（本地计价，未经验证）")
+        assert "蛋白质不足" in text and "蛋白质下限" in text
+
+    def test_explicit_sodium_cap_with_missing_data_flags_all(self):
+        # score_and_rank 语义：显式设置 max_sodium 但菜单无 sodium 数据
+        # → 所有方案按不满足处理（保守、如实）；CLI 层在无数据时不启用约束
+        menu = {"items": [{"mealCode": "A", "name": "主餐", "price": 25.0}]}
+        plans = build_candidates(WANTS, [], menu)
+        result = score_and_rank(plans, make_local_pricer(menu),
+                                max_sodium=800.0, nutrition_table={})
+        assert result["ranked"][0].over_sodium
