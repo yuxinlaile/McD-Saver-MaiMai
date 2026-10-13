@@ -1,7 +1,7 @@
 ---
 name: maimai-saver
 description: 麦麦省钱助手——基于麦当劳中国官方 MCP Server 的省钱点餐技能。当用户提到麦当劳、麦乐送、麦麦、点麦当劳、想省钱/薅羊毛/领券/优惠、查优惠怎么用、积分兑换、麦麦商城、积分抽奖、麦当劳活动，或询问"怎么点麦当劳最划算"时使用本技能。核心能力：在下单前自动完成"领券→选券→比价→积分抵扣评估"，用 35 个官方工具帮用户以最低价格吃到同样的麦当劳。
-version: 1.4.2
+version: 1.5.0
 license: MIT
 ---
 
@@ -96,7 +96,7 @@ python scripts/mcd.py call query-my-account              # 查积分余额
 | 门店与地址 | `query-nearby-stores`、`delivery-query-addresses`、`delivery-create-address`、`delivery-query-stores` | 到店/外送场景前置查询 |
 | 团餐 | `query-meal-assistance`、`query-promotions` | 助餐服务与团餐促销 |
 | 全渠道比价 | `scripts/deal_compare.py`（本地工具，非 MCP） | 结合美团/抖音等团购券（手动录入）与官方价格估算比价 |
-| 组合优化 | `scripts/optimizer.py`（本地工具，非 MCP） | 枚举无券/单券/凑单/改点套餐候选方案，支持预算与热量约束，--mcp 模式经 calculate-price 真实计价，输出最优组合 |
+| 组合优化 | `scripts/optimizer.py`（本地工具，非 MCP） | 枚举无券/单券/凑单/改点套餐候选方案，支持预算/热量/蛋白/钠约束，--mcp 模式经 calculate-price 真实计价，输出最优组合 |
 | 沉默成本 | `scripts/silent_cost.py`（本地工具，非 MCP） | 临期券扫描 + 消费画像 + 积分体检（数据来自 query-my-coupons/order-list/query-my-account） |
 | 其他 | `query-party-city/store/date/session`、`party-order-create`、`mall-order-list/detail` | 主题活动与商城订单 |
 
@@ -193,7 +193,10 @@ query-meals / query-meal-detail → 写 menu.json（含价格，记录零成本�
 → python scripts/optimizer.py plan --wants wants.json --menu menu.json \
      --coupons coupons.json [--mcp --store-code ...] [--budget 30] [--max-kcal 800]
    （--mcp 真实计价模式的结果才能作为下单依据；估算模式输出必须标注"未经验证"；
-     --budget/--max-kcal 为可选约束，违反约束的方案排后展示并标注超出量）
+     --budget/--max-kcal 为可选约束，违反约束的方案排后展示并标注超出量；
+     v1.5 起菜单含 protein/sodium 字段时可用 --min-protein 20 --max-sodium 1500
+     做营养约束——数据缺失的方案按不满足处理并如实标注「蛋白质未知」，
+     绝不虚构达标。健身/控盐用户主动提出时使用）
 → 向用户展示方案排名与省钱明细；凑单方案必须附
    "仅当你本来就需要该商品才划算"提示，且不得以凑单方案为默认推荐
 → 【用户明确确认】→ calculate-price 复核 → create-order
@@ -269,5 +272,5 @@ maimai-saver/
 │   └── error-handling.md               # 错误码、重试策略与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 一次完整省钱点餐的示例会话
-└── tests/                              # pytest 单元测试（89 个用例）
+└── tests/                              # pytest 单元测试（98 个用例）
 ```
