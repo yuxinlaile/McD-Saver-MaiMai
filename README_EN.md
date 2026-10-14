@@ -223,7 +223,20 @@ never commit it, never let it appear in logs. If leaked, re-apply at open.mcd.cn
 | Utilities | `now-time-info` `campaign-calendar` |
 
 Full catalog: [`references/tools.md`](references/tools.md); workflows:
-[`references/workflows.md`](references/workflows.md) and [`SKILL.md`](SKILL.md).
+[`references/workflows.md`](references/workflows.md) and [`SKILL.md`](SKILL.md);
+integration pitfalls (response shapes / units / polymorphic fields / snapshot
+freshness): [`references/mcp-pitfalls.md`](references/mcp-pitfalls.md).
+
+## Capability status
+
+| Status | Item |
+|---|---|
+| ✅ Verified | 35-tool connectivity & lifecycle · full 4-step pipeline (113 fixtures-regression tests) · calculate-price dual pricing · claim confirmation flow |
+| 🔜 Pending real-env re-check | `--probe` coupon valuation (code & tests ready; awaiting a real-token run documented in [verified-run](examples/verified-run.md)) |
+| ⚠️ Known limits | group-buy comparison is same-basis estimation (no public APIs) · nutrition constraints depend on menu nutrition fields · mainland China only · single-user non-commercial |
+
+**Order safety**: no order is created without explicit user confirmation;
+order created ≠ paid — payment always happens on McDonald's official page.
 
 ## FAQ
 
