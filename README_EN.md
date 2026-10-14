@@ -4,7 +4,7 @@
 
 <img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
 
-**The same combo costs ¥43.5 à la carte, ¥33.5 as a set meal — let a deterministic algorithm find the gap, and reclaim the coupons expiring in your wallet.**
+**Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8E%AE_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
 [![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)

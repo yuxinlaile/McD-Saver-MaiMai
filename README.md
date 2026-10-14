@@ -4,7 +4,7 @@
 
 <img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
 
-**同一份套餐，单点 ¥43.5、改点套餐 ¥33.5——让确定性算法替你算清这一单，顺手找回你正在过期的券。**
+**让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
 [![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
