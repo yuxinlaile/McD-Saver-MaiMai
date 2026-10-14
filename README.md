@@ -1,20 +1,20 @@
 <div align="center">
 
-# 🍟 麦麦省钱助手 (MaiMai Saver)
+# 🍟 McD Saver (MaiMai)
 
-<img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
+<img src="docs/assets/banner.svg" alt="McD Saver (MaiMai) 麦麦省钱助手" width="720" />
 
 **让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
 
-[![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.7.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.7.0)
+[![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/McD-Saver-MaiMai/demo.html)
+[![Release](https://img.shields.io/badge/Release-v1.7.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-Saver-MaiMai/releases/tag/v1.7.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
-**[🎮 30 秒在线试算（免登录）](https://yuxinlaile.github.io/maimai-saver/demo.html) · [📦 快速开始](#快速开始) · [💬 讨论区](https://github.com/yuxinlaile/maimai-saver/discussions) · [English](README_EN.md)**
+**[🎮 30 秒在线试算（免登录）](https://yuxinlaile.github.io/McD-Saver-MaiMai/demo.html) · [📦 快速开始](#快速开始) · [💬 讨论区](https://github.com/yuxinlaile/McD-Saver-MaiMai/discussions) · [English](README_EN.md)**
 
 </div>
 
@@ -106,12 +106,12 @@
 ### 30 秒体验（免 Token）
 
 ```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git
-cd maimai-saver
+git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git
+cd McD-Saver-MaiMai
 python demo.py          # 离线全链路：领券→选券→比价→积分→排程→跨渠道
 ```
 
-或直接打开[在线试算页](https://yuxinlaile.github.io/maimai-saver/demo.html)（免登录，
+或直接打开[在线试算页](https://yuxinlaile.github.io/McD-Saver-MaiMai/demo.html)（免登录，
 31 项菜单 / 9 张券 / 6 单团购示例，支持粘贴 MCP `query-meals` 输出一键导入真实菜单）。
 
 ### 安装步骤
@@ -126,7 +126,7 @@ python demo.py          # 离线全链路：领券→选券→比价→积分→
 | 方式 | 适合谁 | 怎么做 |
 |---|---|---|
 | **方式一 · MCP 客户端直连** | 用 WorkBuddy / Cursor / Claude Code 等客户端 | 把 [`config/mcp.example.json`](config/mcp.example.json) 中 `${MCD_MCP_TOKEN}` 换成真实 Token，粘贴到客户端 MCP 设置（位置见[配置说明](#配置说明)）并启用 `mcd-mcp` |
-| **方式二 · Agent Skill 安装** | 想让 Agent 自动触发省钱检查 | `git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver`（Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`，Windows 可直接运行仓库内 `install.ps1`），另按方式一配置 MCP 连接；各平台细节见 [agent-skill-installation.md](references/agent-skill-installation.md) |
+| **方式二 · Agent Skill 安装** | 想让 Agent 自动触发省钱检查 | `git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git ~/.claude/skills/maimai-saver`（Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`，Windows 可直接运行仓库内 `install.ps1`），另按方式一配置 MCP 连接；各平台细节见 [agent-skill-installation.md](references/agent-skill-installation.md) |
 | **方式三 · CLI 独立使用** | 脚本与调试，不装任何客户端 | `export MCD_MCP_TOKEN="你的Token"`（或写入 `~/.mcd_mcp_token` 文件），然后 `python scripts/mcd.py check` 验证连通性 |
 
 安装 Skill 后 Agent 会按 `SKILL.md` 自动执行四步检查，并遵守四条规范：
@@ -268,7 +268,7 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 | v1.4.x | 多维约束 + 套餐替换 + 积分影子价格 + 一键领券 |
 
 完整变更记录见 [CHANGELOG.md](CHANGELOG.md)，各版本下载见
-[Releases](https://github.com/yuxinlaile/maimai-saver/releases)。
+[Releases](https://github.com/yuxinlaile/McD-Saver-MaiMai/releases)。
 
 ## 参与贡献
 
@@ -299,6 +299,6 @@ CHANGELOG 补充 · **README 中英同步**。
 
 <div align="center">
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/maimai-saver&type=Date)](https://star-history.com/#yuxinlaile/maimai-saver&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/McD-Saver-MaiMai&type=Date)](https://star-history.com/#yuxinlaile/McD-Saver-MaiMai&Date)
 
 </div>

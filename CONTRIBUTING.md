@@ -10,9 +10,9 @@
 
 | 想做的事 | 去哪里 | 说明 |
 |---|---|---|
-| 报告 Bug | [Issues](https://github.com/yuxinlaile/maimai-saver/issues/new/choose) | 用 Bug 模板，附复现步骤与报错截图 |
+| 报告 Bug | [Issues](https://github.com/yuxinlaile/McD-Saver-MaiMai/issues/new/choose) | 用 Bug 模板，附复现步骤与报错截图 |
 | 功能建议 | Issues（Feature 模板） | 先搜一下是否已有同类建议 |
-| 使用咨询 / 心得分享 | [Discussions](https://github.com/yuxinlaile/maimai-saver/discussions) | General 分享战果，Q&A 提问 |
+| 使用咨询 / 心得分享 | [Discussions](https://github.com/yuxinlaile/McD-Saver-MaiMai/discussions) | General 分享战果，Q&A 提问 |
 | 分享美团/抖音团购价格 | Discussions（General） | 贴出券面值/售价/限制，可充实券库示例 |
 | 提交代码 | Fork + PR | 见下方流程与自检清单 |
 | 改进文档 / 翻译校对 | Fork + PR | README 中英同步是硬要求（见自检清单） |
