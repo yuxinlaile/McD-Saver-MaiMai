@@ -4,12 +4,19 @@
 
 回答一个省钱工具很少回答的问题：「你正在白扔多少钱？」
 
-三部分（全部来自官方 MCP 只读工具，零风险）：
+四部分（全部来自官方 MCP 只读工具，零风险）：
 
 - 临期券扫描：7 天内到期的券按面值合计，列出优先处理清单；
+- 用券排程（v1.6）：过期窗口 × 历史点单频率 → 推算窗口内实际能消耗的
+  点单次数，把券按净价值排序排入点单——「可实现金额」与「注定过期金额」
+  一次算清。券不是越多越好，用得上才算数；
 - 消费画像：近 N 单的订单数 / 总支出 / 客单价 / 高频复购单品
   （复购 ≥2 次的单品提示改套餐的省钱方向）；
 - 积分体检：可用积分与本月/下月即将过期积分。
+
+券面值实测（--probe，v1.6）：无面值字段/标题无金额的券，把券自带的商品码
+与 couponId 传给官方 calculate-price，返回的 discount 即该券精确价值——
+实测优先、估算兜底，绝不虚构。
 
 数据获取（Agent 按 SKILL.md 工作流执行，JSON 原样保存即可）：
 
@@ -24,8 +31,9 @@
 
 示例::
 
-    python scripts/silent_cost.py demo        # 离线演示（内嵌示例数据）
-
+    python scripts/silent_cost.py demo                          # 离线演示
+    python scripts/silent_cost.py demo --html report.html       # 生成可分享单文件 HTML
+    python scripts/silent_cost.py report --coupons c.json --probe --store-code ST001
 退出码：0 成功 · 1 用法/数据错误
 """
 from __future__ import annotations
@@ -154,7 +162,9 @@ def analyze_coupons(coupons_raw: Any, today: Optional[datetime] = None) -> Dict[
             continue
         if 0 <= days <= EXPIRING_DAYS:
             title = str(coupon.get("title") or coupon.get("couponName") or coupon.get("couponId") or "未命名券")
-            expiring.append({"title": title, "face": face, "days": days})
+            expiring.append({"title": title, "face": face, "days": days,
+                             "couponId": coupon.get("couponId"),
+                             "productCode": _first_key(coupon, ["productCode", "itemCode", "goodsCode", "mealCode"])})
     expiring.sort(key=lambda c: c["days"])
     return {
         "total": len(records),
@@ -164,9 +174,11 @@ def analyze_coupons(coupons_raw: Any, today: Optional[datetime] = None) -> Dict[
     }
 
 
-def analyze_orders(orders_raw: Any) -> Dict[str, Any]:
+def analyze_orders(orders_raw: Any, today: Optional[datetime] = None) -> Dict[str, Any]:
+    today = today or datetime.now()
     records = _unwrap(orders_raw)
     amounts: List[float] = []
+    order_days: List[datetime] = []
     item_counter: Dict[str, int] = {}
     unrecognized = 0
     for order in records:
@@ -175,6 +187,14 @@ def analyze_orders(orders_raw: Any) -> Dict[str, Any]:
             unrecognized += 1
         else:
             amounts.append(amount)
+        when = _first_key(order, TIME_KEYS)
+        if when is not None:
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%Y/%m/%d"):
+                try:
+                    order_days.append(datetime.strptime(str(when)[:len(fmt) + 2].strip(), fmt))
+                    break
+                except ValueError:
+                    continue
         items = order.get("items") or order.get("orderItems") or order.get("products") or []
         if isinstance(items, list):
             for item in items:
@@ -187,14 +207,96 @@ def analyze_orders(orders_raw: Any) -> Dict[str, Any]:
                     item_counter[str(name)] = item_counter.get(str(name), 0) + max(1, int(qty or 1))
     top_items = sorted(item_counter.items(), key=lambda kv: kv[1], reverse=True)[:3]
     total = sum(amounts)
+    # 点单频率：以最早订单日为观测起点（含当天），单位：单/天
+    frequency = None
+    if order_days:
+        span = max((today - min(order_days)).days, 1)
+        frequency = len(order_days) / span
     return {
         "order_count": len(records),
         "amount_count": len(amounts),
         "total_spend": total if amounts else None,
         "avg_ticket": (total / len(amounts)) if amounts else None,
+        "order_frequency": frequency,
         "top_items": [{"name": n, "count": c} for n, c in top_items if c >= 2],
         "unrecognized": unrecognized,
     }
+
+
+# ---------------------------------------------------------------------------
+# 用券排程（v1.6）：过期窗口 × 点单频率 → 可实现 vs 注定过期
+# ---------------------------------------------------------------------------
+def schedule_coupons(coupons: Dict[str, Any], orders: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """把临期券按面值降序排入「过期窗口内的预期点单次数」。
+
+    窗口 = 临期券中最早到期的天数（全部可用的期限内）；预期点单次数 =
+    点单频率 × 窗口（向下取整，至少 1）。排不进点单的券标记为注定过期——
+    名义面值再高，用不上就不算钱。数据不足（无频率或无临期券）返回 None。
+    """
+    expiring = [c for c in coupons.get("expiring", []) if c.get("face") is not None]
+    frequency = orders.get("order_frequency")
+    if not expiring or frequency is None:
+        return None
+    window = max(min(c["days"] for c in expiring), 1)
+    expected_orders = max(1, int(frequency * window))
+    ranked = sorted(expiring, key=lambda c: (c["face"] or 0.0), reverse=True)
+    scheduled, missed = [], []
+    for idx, coupon in enumerate(ranked):
+        entry = dict(coupon)
+        if idx < expected_orders:
+            entry["slot"] = "第 {0} 单".format(idx + 1)
+            scheduled.append(entry)
+        else:
+            entry["slot"] = "排不上"
+            missed.append(entry)
+    realizable = sum(c["face"] for c in scheduled)
+    doomed = sum(c["face"] for c in missed)
+    return {
+        "window_days": window,
+        "expected_orders": expected_orders,
+        "frequency": frequency,
+        "scheduled": scheduled,
+        "missed": missed,
+        "realizable": realizable,
+        "doomed": doomed,
+        "face_total": realizable + doomed,
+    }
+
+
+# ---------------------------------------------------------------------------
+# 券面值实测（v1.6）：calculate-price 带 couponId 实测，估算兜底
+# ---------------------------------------------------------------------------
+def probe_coupon_value(client: Any, coupon: Dict[str, Any]) -> Optional[float]:
+    """把券商品码（若有）与 couponId 传给官方 calculate-price，实测券精确价值。
+
+    返回值口径：响应中的 discount 字段（券抵扣金额）。任何一步解析失败
+    返回 None——调用方应保留估算值并标注「估算」，绝不虚构实测结果。
+    """
+    product_code = coupon.get("productCode")
+    coupon_id = coupon.get("couponId")
+    if not coupon_id:
+        return None
+    products = [{"mealCode": product_code, "quantity": 1}] if product_code else []
+    args: Dict[str, Any] = {
+        "storeCode": getattr(client, "_store_code", ""),
+        "orderType": getattr(client, "_order_type", 1),
+    }
+    if products:
+        args["products"] = products
+    args["couponId"] = coupon_id
+    try:
+        result = client.call_tool("calculate-price", args)
+    except Exception:  # noqa: BLE001 - 工具层任何失败都不应中断体检
+        return None
+    data = result.get("data", result) if isinstance(result, dict) else {}
+    discount = None
+    for key in ("discount", "couponDiscount", "discountAmount", "couponAmount"):
+        value = _first_key(data, [key]) if isinstance(data, dict) else None
+        parsed = _parse_amount(value)
+        if parsed is not None:
+            discount = parsed
+            break
+    return discount
 
 
 def analyze_points(points_raw: Any) -> Dict[str, Any]:
@@ -245,7 +347,8 @@ def _fmt(value: Optional[float]) -> str:
 
 
 def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
-                  points: Dict[str, Any], mall: Optional[Dict[str, Any]] = None) -> str:
+                  points: Dict[str, Any], mall: Optional[Dict[str, Any]] = None,
+                  schedule: Optional[Dict[str, Any]] = None) -> str:
     lines: List[str] = []
     lines.append("=" * 68)
     lines.append("麦麦省钱助手 · 沉默成本体检报告")
@@ -255,7 +358,10 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
     lines.append("【一】临期券（{0} 天内到期）".format(EXPIRING_DAYS))
     if coupons["expiring"]:
         for c in coupons["expiring"]:
-            face = "¥{0:.2f}".format(c["face"]) if c["face"] is not None else "面值未识别"
+            if c.get("face_source") == "measured":
+                face = "¥{0:.2f}（实测）".format(c["face"])
+            else:
+                face = "¥{0:.2f}".format(c["face"]) if c["face"] is not None else "面值未识别（可用 --probe 实测）"
             lines.append("  · {0} ｜ {1} ｜ 还剩 {2} 天".format(c["title"], face, c["days"]))
         lines.append("  合计面值：{0}".format(_fmt(coupons["expiring_face_total"])))
         lines.append("  建议：优先用掉临期券——过期即沉没，凑单达标也比浪费划算。")
@@ -263,6 +369,22 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
         lines.append("  近 {0} 天内没有临期券。".format(EXPIRING_DAYS))
     if coupons["unrecognized"]:
         lines.append("  （{0} 张券的有效期字段未识别，已跳过）".format(coupons["unrecognized"]))
+
+    if schedule:
+        lines.append("")
+        lines.append("【一·B】用券排程（窗口 {0} 天 × 频率 {1:.3f} 单/天 ≈ {2} 单）".format(
+            schedule["window_days"], schedule["frequency"], schedule["expected_orders"]))
+        lines.append("  券不是越多越好，用得上才算数：")
+        for c in schedule["scheduled"]:
+            lines.append("    {0} → {1} ｜ {2} ｜ 净用掉 ¥{3:.2f}".format(
+                c["slot"], c["title"], "还剩 {0} 天".format(c["days"]), c["face"]))
+        if schedule["missed"]:
+            lines.append("  排不上（注定随券过期浪费 ¥{0:.2f}）：".format(schedule["doomed"]))
+            for c in schedule["missed"]:
+                lines.append("    · {0} ｜ ¥{1:.2f} ｜ 还剩 {2} 天".format(c["title"], c["face"], c["days"]))
+        lines.append("  名义 ¥{0:.2f} → 可实现 ¥{1:.2f}，注定过期 ¥{2:.2f}。".format(
+            schedule["face_total"], schedule["realizable"], schedule["doomed"]))
+        lines.append("  本月最该做的事：把排得上的券优先用掉——这笔钱不用就是纯损失。")
 
     lines.append("")
     lines.append("【二】消费画像（近 {0} 单）".format(orders["order_count"]))
@@ -298,6 +420,131 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
     else:
         lines.append("  积分账户字段未识别（可先用 query-my-account 核对数据）。")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# 单文件 HTML 报告（v1.6）：零 CDN、双击打开即可截图分享
+# ---------------------------------------------------------------------------
+_HTML_TMPL = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦省钱助手 · 沉默成本体检报告</title>
+<style>
+  body {{ font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+         background: #FFF8EE; color: #292321; margin: 0; padding: 32px 16px; }}
+  .card {{ max-width: 720px; margin: 0 auto 16px; background: #fff; border-radius: 14px;
+          padding: 22px 26px; box-shadow: 0 2px 10px rgba(191,124,26,.12); }}
+  h1 {{ font-size: 20px; margin: 0 0 4px; }}
+  h2 {{ font-size: 15px; margin: 0 0 10px; color: #B0720F; letter-spacing: .5px; }}
+  .sub {{ color: #8a7a66; font-size: 12px; margin-bottom: 14px; }}
+  .row {{ display: flex; justify-content: space-between; padding: 7px 0;
+          border-bottom: 1px dashed #f0e4d0; font-size: 14px; gap: 12px; }}
+  .row:last-child {{ border-bottom: none; }}
+  .money {{ font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }}
+  .good {{ color: #1a7f37; }} .bad {{ color: #c62828; }} .muted {{ color: #9a8b77; }}
+  .stat {{ display: flex; gap: 10px; margin: 10px 0 2px; flex-wrap: wrap; }}
+  .stat div {{ flex: 1; min-width: 130px; background: #FFF3DC; border-radius: 10px;
+               padding: 10px 12px; text-align: center; }}
+  .stat b {{ display: block; font-size: 20px; margin-top: 2px; }}
+  footer {{ max-width: 720px; margin: 0 auto; text-align: center; color: #9a8b77;
+            font-size: 11px; line-height: 1.8; }}
+  footer a {{ color: #B0720F; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🍟 沉默成本体检报告</h1>
+  <div class="sub">生成于 {generated} · 数据来自麦当劳官方 MCP 只读工具 · 金额为估算口径</div>
+  {coupons_block}
+</div>
+<div class="card">
+  <h2>【二】消费画像</h2>
+  {orders_block}
+</div>
+<div class="card">
+  <h2>【三】积分体检</h2>
+  {points_block}
+</div>
+<footer>maimai-saver · 社区开源项目，与麦当劳公司无关联<br>
+<a href="https://github.com/yuxinlaile/maimai-saver">GitHub 仓库</a> ·
+<a href="https://yuxinlaile.github.io/maimai-saver/demo.html">在线试算</a> · 卡号/Token 已脱敏，可安全截图</footer>
+</body>
+</html>
+"""
+
+
+def render_html(coupons: Dict[str, Any], orders: Dict[str, Any],
+                points: Dict[str, Any], mall: Optional[Dict[str, Any]] = None,
+                schedule: Optional[Dict[str, Any]] = None,
+                generated: Optional[str] = None) -> str:
+    """生成零依赖单文件 HTML 报告——可直接截图分享的「体检长图」。"""
+    now = generated or datetime.now().strftime("%Y-%m-%d %H:%M")
+    rows = []
+    if coupons["expiring"]:
+        for c in coupons["expiring"]:
+            face = "¥{0:.2f}".format(c["face"]) if c["face"] is not None else "未识别"
+            src = ' <span class="good">实测</span>' if c.get("face_source") == "measured" else ""
+            rows.append('<div class="row"><span>{0}</span><span class="money">{1}{2} · 还剩 {3} 天</span></div>'.format(
+                _esc(c["title"]), face, src, c["days"]))
+
+        stat = '<div class="stat"><div>临期面值合计<b class="money">{0}</b></div>'.format(_fmt_html(coupons["expiring_face_total"]))
+        if schedule:
+            stat += ('<div>窗口内可实现<b class="money good">{0}</b></div>'
+                     '<div>注定过期<b class="money bad">{1}</b></div>').format(
+                _fmt_html(schedule["realizable"]), _fmt_html(schedule["doomed"]))
+        stat += "</div>"
+        rows.append(stat)
+        if schedule:
+            for c in schedule["scheduled"]:
+                rows.append('<div class="row"><span>🥇 {0} → {1}</span><span class="money good">{2}</span></div>'.format(
+                    _esc(c["title"]), c["slot"], _fmt_html(c["face"])))
+            for c in schedule["missed"]:
+                rows.append('<div class="row"><span>⌛ {0}（排不上）</span><span class="money bad">{1}</span></div>'.format(
+                    _esc(c["title"]), _fmt_html(c["face"])))
+    else:
+        rows.append('<div class="row"><span class="muted">近 {0} 天内没有临期券。</span></div>'.format(EXPIRING_DAYS))
+    coupons_block = "<h2>【一】临期券（{0} 天内到期）</h2>".format(EXPIRING_DAYS) + "".join(rows)
+
+    orows = []
+    if orders["amount_count"]:
+        orows.append('<div class="stat"><div>订单数<b>{0}</b></div><div>总支出<b class="money">{1}</b></div>'
+                     '<div>客单价<b class="money">{2}</b></div></div>'.format(
+            orders["order_count"], _fmt_html(orders["total_spend"]), _fmt_html(orders["avg_ticket"])))
+        for item in orders["top_items"]:
+            orows.append('<div class="row"><span>🔁 {0}</span><span>× {1} 次——改点对应套餐通常更省</span></div>'.format(
+                _esc(item["name"]), item["count"]))
+    else:
+        orows.append('<div class="row"><span class="muted">暂无可识别的历史订单金额。</span></div>')
+    orders_block = "".join(orows)
+
+    prows = []
+    if points["available"] is not None:
+        prows.append('<div class="row"><span>可用积分</span><span class="money">{0:.0f}</span></div>'.format(points["available"]))
+        if points.get("expiring_now"):
+            prows.append('<div class="row"><span>本月将过期（优先级最高）</span><span class="money bad">{0:.0f}</span></div>'.format(points["expiring_now"]))
+        if points.get("expiring_next"):
+            prows.append('<div class="row"><span>下月将过期</span><span class="money">{0:.0f}</span></div>'.format(points["expiring_next"]))
+        if mall and mall.get("shadow_price"):
+            prows.append('<div class="row"><span>积分影子价格（最优兑换「{0}」）</span><span class="money">{1:.4f} 元/积分</span></div>'.format(
+                _esc(mall["best_product"]["name"]), mall["shadow_price"]))
+            prows.append('<div class="row"><span>可用积分折现</span><span class="money">≈ ¥{0:.2f}</span></div>'.format(
+                points["available"] * mall["shadow_price"]))
+    else:
+        prows.append('<div class="row"><span class="muted">积分账户字段未识别。</span></div>')
+    points_block = "".join(prows)
+
+    return _HTML_TMPL.format(generated=_esc(now), coupons_block=coupons_block,
+                             orders_block=orders_block, points_block=points_block)
+
+
+def _esc(text: Any) -> str:
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def _fmt_html(value: Optional[float]) -> str:
+    return "¥{0:.2f}".format(value) if value is not None else "—"
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +586,7 @@ def _load_json(path: str) -> Any:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="silent_cost",
-        description="麦麦省钱助手 · 沉默成本体检——临期券 + 消费画像 + 积分（数据来自官方 MCP 只读工具）。",
+        description="麦麦省钱助手 · 沉默成本体检——临期券排程 + 消费画像 + 积分（数据来自官方 MCP 只读工具）。",
     )
     sub = parser.add_subparsers(dest="command", metavar="<command>")
     report = sub.add_parser("report", help="生成体检报告")
@@ -347,8 +594,42 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--orders", help="order-list 响应 JSON")
     report.add_argument("--points", help="query-my-account 响应 JSON")
     report.add_argument("--mall", help="积分商城商品列表 JSON（用于积分影子价格估算，可选）")
-    sub.add_parser("demo", help="离线演示（内嵌示例数据）")
+    report.add_argument("--html", metavar="PATH", help="同时输出单文件 HTML 报告（零依赖，可截图分享）")
+    report.add_argument("--probe", action="store_true",
+                        help="无面值券走 calculate-price 实测精确价值（需要 MCP Token）")
+    report.add_argument("--store-code", default="", help="--probe 实测时的门店编码")
+    demo = sub.add_parser("demo", help="离线演示（内嵌示例数据）")
+    demo.add_argument("--html", metavar="PATH", help="同时输出单文件 HTML 报告（零依赖，可截图分享）")
     return parser
+
+
+def _run_probe(coupons: Dict[str, Any], store_code: str) -> int:
+    """对无面值临期券执行实测；成功则回填 face 并标记 face_source=measured。"""
+    try:
+        from mcd_client import McdMcpClient, load_token  # 延迟导入，离线路径零依赖
+    except ImportError:  # pragma: no cover
+        print("错误: 无法导入 mcd_client，请从项目根目录运行。", file=sys.stderr)
+        return EXIT_USAGE
+    token = load_token()
+    if not token:
+        print("提示: --probe 需要 MCP Token（MCD_MCP_TOKEN 环境变量），本次跳过实测。",
+              file=sys.stderr)
+        return EXIT_OK
+    client = McdMcpClient(token=token)
+    client._store_code = store_code
+    client._order_type = 1
+    probed = 0
+    for coupon in coupons.get("expiring", []):
+        if coupon.get("face") is not None:
+            continue
+        measured = probe_coupon_value(client, coupon)
+        if measured is not None:
+            coupon["face"] = measured
+            coupon["face_source"] = "measured"
+            probed += 1
+    print("（实测完成：{0} 张券获得精确面值；其余保留估算或标注未识别）".format(probed),
+          file=sys.stderr)
+    return EXIT_OK
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -356,23 +637,39 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "demo":
-        print(render_report(analyze_coupons(DEMO_COUPONS, datetime(2026, 10, 12)),
-                            analyze_orders(DEMO_ORDERS),
-                            analyze_points(DEMO_POINTS),
-                            analyze_mall(DEMO_MALL)))
+        coupons = analyze_coupons(DEMO_COUPONS, datetime(2026, 10, 12))
+        orders = analyze_orders(DEMO_ORDERS, datetime(2026, 10, 12))
+        points = analyze_points(DEMO_POINTS)
+        schedule = schedule_coupons(coupons, orders)
+        print(render_report(coupons, orders, points, analyze_mall(DEMO_MALL), schedule))
+        if getattr(args, "html", None):
+            _write_html(args.html, coupons, orders, points, schedule)
         return EXIT_OK
 
     if args.command == "report":
-        coupons = _load_json(args.coupons) if args.coupons else {}
-        orders = _load_json(args.orders) if args.orders else {}
-        points = _load_json(args.points) if args.points else {}
+        coupons = analyze_coupons(_load_json(args.coupons) if args.coupons else {})
+        orders = analyze_orders(_load_json(args.orders) if args.orders else {})
+        points = analyze_points(_load_json(args.points) if args.points else {})
         mall = _load_json(args.mall) if args.mall else None
-        print(render_report(analyze_coupons(coupons), analyze_orders(orders),
-                            analyze_points(points), analyze_mall(mall)))
+        if getattr(args, "probe", None):
+            code = _run_probe(coupons, getattr(args, "store_code", ""))
+            if code != EXIT_OK:
+                return code
+        schedule = schedule_coupons(coupons, orders)
+        print(render_report(coupons, orders, points, analyze_mall(mall), schedule))
+        if getattr(args, "html", None):
+            _write_html(args.html, coupons, orders, points, schedule)
         return EXIT_OK
 
     parser.print_help()
     return EXIT_OK
+
+
+def _write_html(path: str, coupons: Dict[str, Any], orders: Dict[str, Any],
+                points: Dict[str, Any], schedule: Optional[Dict[str, Any]]) -> None:
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(render_html(coupons, orders, points, None, schedule))
+    print("HTML 报告已生成：{0}（双击打开即可截图分享）".format(path))
 
 
 if __name__ == "__main__":

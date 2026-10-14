@@ -1,0 +1,8 @@
+{
+  "data": [
+    {"createTime": "2026-09-02 12:31:05", "totalAmount": 33.5, "items": [{"name": "麦辣鸡腿堡", "quantity": 1}]},
+    {"createTime": "2026-09-11 18:22:41", "totalAmount": 36.0, "items": [{"name": "麦辣鸡腿堡", "quantity": 1}]},
+    {"createTime": "2026-09-25 12:05:17", "totalAmount": 38.0, "items": [{"name": "麦辣鸡腿堡", "quantity": 1}, {"name": "中可乐", "quantity": 1}]},
+    {"createTime": "2026-10-08 19:44:02", "totalAmount": 37.0, "items": [{"name": "麦辣鸡腿堡", "quantity": 1}]}
+  ]
+}

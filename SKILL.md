@@ -1,7 +1,7 @@
 ---
 name: maimai-saver
 description: 麦麦省钱助手——基于麦当劳中国官方 MCP Server 的省钱点餐技能。当用户提到麦当劳、麦乐送、麦麦、点麦当劳、想省钱/薅羊毛/领券/优惠、查优惠怎么用、积分兑换、麦麦商城、积分抽奖、麦当劳活动，或询问"怎么点麦当劳最划算"时使用本技能。核心能力：在下单前自动完成"领券→选券→比价→积分抵扣评估"，用 35 个官方工具帮用户以最低价格吃到同样的麦当劳。
-version: 1.5.0
+version: 1.6.0
 license: MIT
 ---
 
@@ -97,7 +97,7 @@ python scripts/mcd.py call query-my-account              # 查积分余额
 | 团餐 | `query-meal-assistance`、`query-promotions` | 助餐服务与团餐促销 |
 | 全渠道比价 | `scripts/deal_compare.py`（本地工具，非 MCP） | 结合美团/抖音等团购券（手动录入）与官方价格估算比价 |
 | 组合优化 | `scripts/optimizer.py`（本地工具，非 MCP） | 枚举无券/单券/凑单/改点套餐候选方案，支持预算/热量/蛋白/钠约束，--mcp 模式经 calculate-price 真实计价，输出最优组合 |
-| 沉默成本 | `scripts/silent_cost.py`（本地工具，非 MCP） | 临期券扫描 + 消费画像 + 积分体检（数据来自 query-my-coupons/order-list/query-my-account） |
+| 沉默成本 | `scripts/silent_cost.py`（本地工具，非 MCP） | 临期券扫描 + **用券排程**（可实现 vs 注定过期）+ 消费画像 + 积分体检 + **无面值券实测**（--probe）+ **可分享 HTML 报告**（--html）；数据来自 query-my-coupons/order-list/query-my-account |
 | 其他 | `query-party-city/store/date/session`、`party-order-create`、`mall-order-list/detail` | 主题活动与商城订单 |
 
 **入参不确定时**：先执行 `python scripts/mcd.py schema <tool>`（方式 B）或
@@ -208,9 +208,13 @@ python scripts/mcd.py call query-my-coupons --raw > coupons.json
 python scripts/mcd.py call order-list --raw > orders.json
 python scripts/mcd.py call query-my-account --raw > points.json
 → python scripts/silent_cost.py report --coupons coupons.json \
-     --orders orders.json --points points.json
-→ 向用户展示三部分报告；临期券与临期积分必须给出优先处理建议
+     --orders orders.json --points points.json \
+     [--probe --store-code 门店编码] [--html 报告.html]
+→ 向用户展示报告（临期券排程给出「可实现 vs 注定过期」金额）；
+   临期券与临期积分必须给出优先处理建议；用户要求分享时可给 HTML 报告
 ```
+（--probe：无面值券实测精确价值——实测优先、估算兜底、失败如实标注；
+  --html：零依赖单文件报告，可截图分享，不含任何敏感字段）
 
 更多流程（团餐、营养咨询、活动日历等）与分支处理见 `references/workflows.md`；
 十一大省钱策略详解见 `references/money-saving-strategies.md`。
@@ -263,7 +267,7 @@ maimai-saver/
 │   ├── mcd.py                          # CLI 入口：check / tools / schema / call
 │   ├── deal_compare.py                 # 外部团购比价引擎（美团/抖音券手动录入）
 │   ├── optimizer.py                    # 券组合优化器（估算/--mcp 真实计价双模式）
-│   └── silent_cost.py                  # 沉默成本体检（临期券/消费画像/积分）
+│   └── silent_cost.py                  # 沉默成本体检（临期券排程/消费画像/积分/实测/HTML 报告）
 ├── references/
 │   ├── tools.md                        # 35 个工具完整目录与使用要点
 │   ├── money-saving-strategies.md      # 十一大省钱策略详解（核心参考）
@@ -272,5 +276,5 @@ maimai-saver/
 │   └── error-handling.md               # 错误码、重试策略与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 一次完整省钱点餐的示例会话
-└── tests/                              # pytest 单元测试（98 个用例）
+└── tests/                              # pytest 单元测试（113 个用例）
 ```

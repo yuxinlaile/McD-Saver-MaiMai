@@ -3,6 +3,28 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式，
 版本号遵循语义化版本（SemVer）。
 
+## [1.6.0] - 2026-10-14
+
+### Added
+- **用券排程**（silent_cost）：临期券过期窗口 × 历史点单频率 →
+  把券按面值降序排入窗口内预期点单次数，一次算清
+  「名义面值 → 可实现 → 注定过期」——券不是越多越好，用得上才算数
+- **券面值实测**（silent_cost `--probe`）：无面值字段/标题无金额的券，
+  券商品码 + couponId 传官方 calculate-price 实测精确价值——
+  实测优先、估算兜底、失败如实标注（借鉴社区同类项目的实测思路）
+- **单文件 HTML 报告**（silent_cost `--html`）：零 CDN、零脚本、
+  双击打开即可截图分享的「体检长图」，卡号类敏感字段不输出
+- **30 秒离线全链路演示**（根目录 `demo.py` + `fixtures/`）：
+  与真实 MCP 响应同格式的数据快照，原样跑通四步检查全链路——
+  **demo 即回归测试**（tests/test_demo_pipeline.py 断言其输出）
+- **真实性资产**：真实运行输出渲染的终端截图入 README（标注日期与「未美化」）、
+  「还可以这样问」指令映射表、mermaid 全渠道架构图、README 差异化对比表
+- **examples/verified-run.md**：真实 Token 运行验证记录的留档模板与流程
+- pyproject.toml：包元数据与 pytest 配置（`pip install .` 可用，运行时仍零依赖）
+
+### Testing
+- 单元测试 98 → 113（用券排程 / 券面值实测 / HTML 报告 / demo 全链路回归）
+
 ## [1.5.0] - 2026-10-13
 
 ### Added

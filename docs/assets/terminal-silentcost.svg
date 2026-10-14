@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="814" viewBox="0 0 900 814" font-family="Consolas, 'Courier New', monospace">
+  <rect width="100%" height="100%" rx="10" fill="#1e1e2e"/>
+  <rect width="100%" height="40" rx="10" fill="#181825"/>
+  <circle cx="24" cy="20" r="6" fill="#f38ba8"/><circle cx="44" cy="20" r="6" fill="#f9e2af"/><circle cx="64" cy="20" r="6" fill="#a6e3a1"/>
+  <text x="86" y="25" fill="#a6adc8" font-size="13">python scripts/silent_cost.py demo</text>
+  <text x="20" y="68" fill="#89b4fa" font-size="13" xml:space="preserve">====================================================================</text>
+  <text x="20" y="90" fill="#cdd6f4" font-size="13" xml:space="preserve">麦麦省钱助手 · 沉默成本体检报告</text>
+  <text x="20" y="112" fill="#89b4fa" font-size="13" xml:space="preserve">====================================================================</text>
+  <text x="20" y="134" fill="#cdd6f4" font-size="13" xml:space="preserve"></text>
+  <text x="20" y="156" fill="#89b4fa" font-size="13" xml:space="preserve">【一】临期券（7 天内到期）</text>
+  <text x="20" y="178" fill="#a6e3a1" font-size="13" xml:space="preserve">  · 满50减12 ｜ ¥12.00 ｜ 还剩 1 天</text>
+  <text x="20" y="200" fill="#a6e3a1" font-size="13" xml:space="preserve">  · 免费脆薯饼 ｜ ¥8.00 ｜ 还剩 2 天</text>
+  <text x="20" y="222" fill="#a6e3a1" font-size="13" xml:space="preserve">  · 9.9元中杯冰美式 ｜ ¥13.10 ｜ 还剩 5 天</text>
+  <text x="20" y="244" fill="#cdd6f4" font-size="13" xml:space="preserve">  合计面值：¥33.10</text>
+  <text x="20" y="266" fill="#f38ba8" font-size="13" xml:space="preserve">  建议：优先用掉临期券——过期即沉没，凑单达标也比浪费划算。</text>
+  <text x="20" y="288" fill="#cdd6f4" font-size="13" xml:space="preserve"></text>
+  <text x="20" y="310" fill="#89b4fa" font-size="13" xml:space="preserve">【一·B】用券排程（窗口 1 天 × 频率 0.100 单/天 ≈ 1 单）</text>
+  <text x="20" y="332" fill="#cdd6f4" font-size="13" xml:space="preserve">  券不是越多越好，用得上才算数：</text>
+  <text x="20" y="354" fill="#a6e3a1" font-size="13" xml:space="preserve">    第 1 单 → 9.9元中杯冰美式 ｜ 还剩 5 天 ｜ 净用掉 ¥13.10</text>
+  <text x="20" y="376" fill="#f38ba8" font-size="13" xml:space="preserve">  排不上（注定随券过期浪费 ¥20.00）：</text>
+  <text x="20" y="398" fill="#a6e3a1" font-size="13" xml:space="preserve">    · 满50减12 ｜ ¥12.00 ｜ 还剩 1 天</text>
+  <text x="20" y="420" fill="#a6e3a1" font-size="13" xml:space="preserve">    · 免费脆薯饼 ｜ ¥8.00 ｜ 还剩 2 天</text>
+  <text x="20" y="442" fill="#a6e3a1" font-size="13" xml:space="preserve">  名义 ¥33.10 → 可实现 ¥13.10，注定过期 ¥20.00。</text>
+  <text x="20" y="464" fill="#cdd6f4" font-size="13" xml:space="preserve">  本月最该做的事：把排得上的券优先用掉——这笔钱不用就是纯损失。</text>
+  <text x="20" y="486" fill="#cdd6f4" font-size="13" xml:space="preserve"></text>
+  <text x="20" y="508" fill="#89b4fa" font-size="13" xml:space="preserve">【二】消费画像（近 4 单）</text>
+  <text x="20" y="530" fill="#cdd6f4" font-size="13" xml:space="preserve">  订单数：4 单 ｜ 总支出：¥144.50 ｜ 客单价：¥36.12</text>
+  <text x="20" y="552" fill="#cdd6f4" font-size="13" xml:space="preserve">  高频单品：</text>
+  <text x="20" y="574" fill="#a6e3a1" font-size="13" xml:space="preserve">    · 麦辣鸡腿堡 × 4 次——若改点对应套餐，通常每单还能再省一些。</text>
+  <text x="20" y="596" fill="#cdd6f4" font-size="13" xml:space="preserve"></text>
+  <text x="20" y="618" fill="#89b4fa" font-size="13" xml:space="preserve">【三】积分体检</text>
+  <text x="20" y="640" fill="#cdd6f4" font-size="13" xml:space="preserve">  可用积分：1200</text>
+  <text x="20" y="662" fill="#cdd6f4" font-size="13" xml:space="preserve">  本月将过期：300（优先级最高，过期即清零）</text>
+  <text x="20" y="684" fill="#cdd6f4" font-size="13" xml:space="preserve">  下月将过期：150</text>
+  <text x="20" y="706" fill="#cdd6f4" font-size="13" xml:space="preserve">  建议：优先用积分兑换临期前会用到的餐品券。</text>
+  <text x="20" y="728" fill="#a6e3a1" font-size="13" xml:space="preserve">  积分价值参考：最优兑换「中杯鲜煮咖啡券」= 0.0210 元/积分（口径：积分商城最优标的效率）</text>
+  <text x="20" y="750" fill="#cdd6f4" font-size="13" xml:space="preserve">  可用积分折现 ≈ ¥25.20——用它判断「这单要不要动积分」的机会成本。</text>
+  <text x="20" y="802" fill="#6c7086" font-size="11">真实运行输出 · 生成于 2026-10-14 · 未做内容美化 · 命令见窗口标题</text>
+</svg>

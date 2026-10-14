@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"couponId": "A1001", "couponName": "免费脆薯饼", "productCode": "M7", "validityEndTime": "2026-10-19 23:59:59"},
+    {"couponId": "A1002", "couponName": "人气麦旋风买一送一", "productCode": "", "validityEndTime": "2026-10-19 23:59:59"},
+    {"couponId": "A1003", "couponName": "9.9元中杯冰美式", "productCode": "M9", "validityEndTime": "2026-10-19 23:59:59"}
+  ]
+}

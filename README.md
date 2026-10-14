@@ -4,19 +4,71 @@
 
 <img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
 
-**让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
+**同一份麦辣三件套，单点 ¥43.5、改点套餐 ¥33.5、找对团购更低——差的这 ¥10，让确定性算法替你算清楚，顺手找回你正在过期的券。**
 
 基于麦当劳中国官方 MCP Server（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server) 集成指南）构建，
 覆盖门店、菜单、点餐、订单、优惠券、积分商城、抽奖、主题活动等 **35 个官方工具**。
 
+<div align="center">
+
+| 🍟 单次点餐实省 | 💸 过期券找回 | 🧮 计价方式 | 🔥 营养约束 | 🎮 免 Token 体验 |
+|:---:|:---:|:---:|:---:|:---:|
+| **¥6 ~ ¥13/单** | **一次几十元** | 官方 calculate-price 逐方案核价 | 预算/热量/蛋白/钠 | [在线试算](https://yuxinlaile.github.io/maimai-saver/demo.html) · [离线 demo](#运行与命令) |
+
+</div>
+
 **核心方法论**：每次下单前自动执行 **领券 → 选券 → 比价 → 积分抵扣评估** 四步省钱检查，
 每一次报价都附带省钱明细（原价 / 优惠 / 实付 / 节省比例）。
 
+**🍟 30 秒体验（无需 Token、不联网）**：
+[在线试算页](https://yuxinlaile.github.io/maimai-saver/demo.html)（免登录，支持一键导入真实菜单）·
+`git clone` 后运行 `python demo.py`（离线全链路演示，输出见下方真实截图）
+
+<div align="center">
+<img src="docs/assets/terminal-demo.svg" alt="python demo.py 真实运行输出——四步检查全链路" width="680" />
+<p><sub>↑ <code>python demo.py</code> 的真实运行输出，未做内容美化，可直接运行复现（demo 即回归测试）</sub></p>
+</div>
+
+## 我们做对了什么别人没做的
+
+同类工具不少，这里把不同点摆在明处：
+
+| 常见做法 | 我们的做法 | 差别 |
+|---|---|---|
+| 只算官方券 | **官方券 + 美团/抖音团购 + 积分**，全渠道同口径估算出「终局建议」 | 别的工具算到官方为止，囤着的团购券没人管 |
+| 鼓励凑单用券 | 凑单以「不凑单」为基准，强制标注提示，警惕**凑单陷阱** | 为用券而多买常常反而更贵 |
+| 券是可用资源 | 券是**有保质期的钱**：用券排程算出「可实现 vs 注定过期」 | 名义 ¥150 的券包，可能只有 ¥60 用得上 |
+| 无面值券靠猜 | 券码 + couponId 传 calculate-price **实测**，失败如实标注 | 模型给不出真实价格，只能猜 |
+| 营养靠口算 | 预算/热量/蛋白/钠**四维约束**，数据缺失按不满足处理并标注 | 健身控卡人群的硬需求，算不出来就说算不出 |
+| 定时轮询抢券 | `claim` 一次性交互确认，**明确不做无人值守** | 自动化在风控侧等同机器人，有封号风险 |
+| 菜单靠手抄 | 在线试算页**一键导入真实菜单**（粘贴 MCP 输出即全量替换） | 官方菜单全量同步的合规路径 |
+
+> **差异化内核：别家在单渠道里找最优，我们把官方 App、美团、抖音、积分商城
+> 四个渠道放在同一张桌子上算终局。**
+
+```mermaid
+flowchart TD
+    U[用户: 想吃X · 预算Y · 热量Z · 蛋白P] --> A[Agent / CLI]
+    A -->|领券前置| M[麦当劳官方 MCP<br/>mcp.mcd.cn]
+    A -->|菜单/券池/营养| M
+    A -->|calculate-price 逐方案核价| M
+    A --> O[optimizer.py<br/>确定性组合优化 + 四维约束]
+    A --> D[deal_compare.py<br/>美团/抖音团购同口径估算]
+    A --> S[silent_cost.py<br/>沉默成本 + 用券排程]
+    O --> R[全渠道终局建议<br/>+ 省钱明细]
+    D --> R
+    S --> R
+    R --> Q{用户确认?}
+    Q -->|是| C[create-order]
+    Q -->|否| R
+```
+
+
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.5.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.5.0)
+[![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-98%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -95,9 +147,12 @@
 - **组合优化**：内置券组合优化器，枚举「无券直点/单券/凑单达标」候选方案，
   `--mcp` 模式经官方 calculate-price 逐方案真实计价，凑单以「不凑单」为基准并强制标注提示；
   多维约束支持预算/热量/蛋白质下限/钠上限（v1.5），违规方案排后如实标注
-- **沉默成本体检**：临期券面值合计 + 历史订单消费画像（客单价/高频单品）+ 积分临期提醒，
+- **沉默成本体检**：临期券面值合计 + **用券排程**（过期窗口×点单频率→「可实现 vs 注定过期」）
+  + 历史订单消费画像 + 积分临期提醒与影子价格 + **单文件可分享 HTML 报告**（零 CDN），
   回答「你正在白扔多少钱」
-- **测试保障**：98 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
+- **券面值实测**：无面值券经券码+couponId 走官方 calculate-price 实测精确价值——
+  实测优先、估算兜底、失败如实标注
+- **测试保障**：113 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
   比价折算决策、组合优化与 CLI 退出码
 
 ## 工具能力总览
@@ -136,6 +191,16 @@
 | 团购 App 用户 | 把手里囤的麦当劳团购券管起来，与官方券自动比较哪边更划算 |
 | 企业行政 / 团餐组织者 | 团餐场景满减规则与助餐服务组合，降低团体订餐成本 |
 | Agent / 效率工具玩家 | 将本仓库作为 Agent Skill（WorkBuddy / Claude Code 等）直接加载 |
+
+### 还可以这样问
+
+| 你说 | 它会处理什么 |
+|---|---|
+| "40 块以内，想吃汉堡加可乐" | 预算约束内枚举组合，无方案时给出最接近方案与超出金额 |
+| "健身餐，蛋白质至少 20g，钠别太高" | 蛋白下限 + 钠上限约束，违规方案排后并标注差多少 |
+| "我囤的美团 40 减 14 券用哪个划算" | 团购券同口径折算当前购物车，输出官方 vs 团购终局建议 |
+| "我最近白扔了多少钱" | 临期券排程：名义面值 → 可实现 → 注定过期，一次算清 |
+| "有券就比，没有也行" | 有券对比带券方案，没券直接比无券方案，不虚构优惠 |
 
 ## 效果预览
 
@@ -195,6 +260,9 @@ maimai-saver/
 ├── mcp-config.example.json             # 脱敏 MCP 配置（仅环境变量占位符）
 ├── workbuddy.md                        # WorkBuddy 对话上下文（参赛专项奖励核验）
 ├── requirements-dev.txt                # 开发/测试依赖（pytest）
+├── pyproject.toml                      # 包元数据与 pytest 配置（pip install . 可用）
+├── demo.py                             # 30 秒离线全链路演示（零 Token，demo 即回归测试）
+├── fixtures/                           # 与真实 MCP 响应同格式的演示数据快照
 ├── config/
 │   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
 ├── install.ps1                         # Windows 一键安装脚本（备份旧版，不碰 Token）
@@ -216,7 +284,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages 在线试算器（免登录）
 │   └── assets/                         # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（98 个用例）
+├── tests/                              # pytest 单元测试（113 个用例）
 └── .github/                            # CI + Issue/PR 模板
 ```
 
@@ -367,8 +435,24 @@ python scripts/mcd.py call query-my-coupons --raw > coupons.json
 python scripts/mcd.py call order-list --raw > orders.json
 python scripts/mcd.py call query-my-account --raw > points.json
 python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
-python scripts/silent_cost.py demo      # 离线演示
+python scripts/silent_cost.py report --coupons coupons.json --probe --store-code ST00123   # 无面值券实测精确价值
+python scripts/silent_cost.py report --coupons coupons.json --html report.html             # 生成可分享单文件 HTML
+python scripts/silent_cost.py demo      # 离线演示（--html 同样可用）
 ```
+
+`--probe`：无面值字段/标题无金额的券，把券商品码与 couponId 传给官方
+calculate-price 实测精确价值——实测优先、估算兜底，失败如实标注。
+`--html`：零依赖单文件报告，双击打开即可截图分享（无外部资源、无脚本）。
+
+### demo.py（30 秒离线全链路，v1.6）
+
+```bash
+python demo.py                      # 四步检查全链路：领券→选券→比价→积分→排程→跨渠道
+python demo.py --section 比价        # 只看某一段
+```
+
+读取 `fixtures/` 下与真实 MCP 响应同格式的数据快照；输出由
+`tests/test_demo_pipeline.py` 断言——**demo 即回归测试**。
 
 ## 配置说明
 
@@ -452,9 +536,9 @@ WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改
 
 ```bash
 # 语法检查（与 CI 一致）
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py
+python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py demo.py
 
-# 安装开发依赖并运行单元测试（98 个用例，不发起网络请求）
+# 安装开发依赖并运行单元测试（113 个用例，不发起网络请求）
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

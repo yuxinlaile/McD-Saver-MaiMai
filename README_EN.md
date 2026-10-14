@@ -4,23 +4,75 @@
 
 <img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
 
-**Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
+**The same McCombo costs ¥43.5 à la carte, ¥33.5 as a set meal, even less with a group-buy — let a deterministic algorithm find the gap, and reclaim the coupons expiring in your wallet.**
 
 Built on McDonald's China official MCP Server (integration guide:
 [M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)), covering
 **35 official tools** across stores, menus, ordering, orders, coupons, points
 mall, lottery and themed events.
 
+<div align="center">
+
+| 🍟 Saved per order | 💸 Expiring coupons | 🧮 Pricing | 🔥 Nutrition caps | 🎮 No-token demo |
+|:---:|:---:|:---:|:---:|:---:|
+| **¥6 ~ ¥13** | **tens of ¥ at once** | official calculate-price per plan | budget/kcal/protein/sodium | [Online demo](https://yuxinlaile.github.io/maimai-saver/demo.html) · [Offline](#usage-and-commands) |
+
+</div>
+
 **Core methodology**: before every order, a mandatory **4-step money-saving
 check** — claim coupons → pick coupons → dual-price comparison → points
 redemption evaluation. Every quote comes with a savings breakdown
 (list price / discount / payable / saved).
 
+**🍟 30-second start (no token, no network)**:
+[online calculator](https://yuxinlaile.github.io/maimai-saver/demo.html) (no sign-in, one-click real-menu import) ·
+`git clone` then `python demo.py` (offline full-pipeline demo, real output below)
+
+<div align="center">
+<img src="docs/assets/terminal-demo.svg" alt="python demo.py real output — full 4-step pipeline" width="680" />
+<p><sub>↑ Actual output of <code>python demo.py</code>, unedited — run it yourself (the demo doubles as a regression test)</sub></p>
+</div>
+
+## What we did differently
+
+Similar tools exist; here is exactly how ours differs:
+
+| Common approach | Our approach | Why it matters |
+|---|---|---|
+| Official coupons only | **Official + Meituan/Douyin group-buys + points mall**, same-basis cross-channel final call | Vouchers sitting in your group-buy apps deserve a seat at the table |
+| Encourage add-ons to reach thresholds | Baseline is "no add-on"; **add-on traps flagged and discouraged** | Buying more just to use a coupon is often more expensive |
+| Coupons are resources | Coupons are **perishable money**: scheduling computes realizable vs doomed value | A ¥150 coupon pack may only be worth ¥60 in practice |
+| Guess faceless coupon values | Probe via calculate-price with the coupon's product code + couponId; **fail honestly** | Models can't produce real prices — they guess |
+| Manual nutrition math | **4-dimension constraints**: budget / kcal / protein floor / sodium cap; missing data flagged as non-compliant | Hard requirement for fitness-conscious users |
+| Cron-style auto-claiming | `claim` is a one-shot interactive confirmation; **no unattended automation** | Scheduled automation looks like bot traffic and risks token bans |
+| Re-type the menu | Online calculator with **one-click real-menu import** (paste MCP output) | The compliant path to full official-menu sync |
+
+> **Core differentiator: others optimize inside one channel; we put the official
+> app, Meituan, Douyin and the points mall on the same table and compute the endgame.**
+
+```mermaid
+flowchart TD
+    U[User: wants X · budget Y · kcal Z · protein P] --> A[Agent / CLI]
+    A -->|claim first| M[McDonald's official MCP<br/>mcp.mcd.cn]
+    A -->|menu / coupons / nutrition| M
+    A -->|calculate-price per plan| M
+    A --> O[optimizer.py<br/>deterministic combos + 4-dim constraints]
+    A --> D[deal_compare.py<br/>group-buy same-basis estimates]
+    A --> S[silent_cost.py<br/>silent cost + coupon scheduling]
+    O --> R[Cross-channel final call<br/>+ savings breakdown]
+    D --> R
+    S --> R
+    R --> Q{User confirms?}
+    Q -->|yes| C[create-order]
+    Q -->|no| R
+```
+
+
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.5.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.5.0)
+[![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-98%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -112,9 +164,13 @@ The project ships three components:
   calculate-price, with no-add-on as the baseline and mandatory add-on caveats;
   multi-dimension constraints for budget / kcal / protein floor / sodium cap
   (v1.5), violators ranked last & flagged honestly
-- **Silent-cost check**: expiring-coupon face-value total + order-history profile
-  (avg ticket / repeat items) + points expiry — answers "how much are you throwing away?"
-- **Tested**: 98 unit tests covering SSE parsing, token resolution, backoff math,
+- **Silent-cost check**: expiring-coupon face-value total + **coupon scheduling**
+  (expiry window × order frequency → realizable vs doomed value) + order-history
+  profile + points expiry + **single-file shareable HTML report** — answers
+  "how much are you throwing away?"
+- **Honest coupon valuation**: faceless coupons probed via calculate-price
+  (product code + couponId); measured first, estimate as fallback, failures flagged
+- **Tested**: 113 unit tests covering SSE parsing, token resolution, backoff math,
   comparison decisions, combination optimization and CLI exit codes
 
 ## Tool coverage
@@ -153,6 +209,16 @@ Full catalog and usage notes: [`references/tools.md`](references/tools.md).
 | Group-buy app users | Manage McDonald's vouchers and compare against official deals |
 | Office admins / group meals | Group-meal promotions and catering services |
 | Agent / productivity tinkerers | Load the repo as an Agent Skill (WorkBuddy, Claude Code, ...) |
+
+### What else you can ask
+
+| You say | What it handles |
+|---|---|
+| "Under ¥40, burger and a drink" | Enumerates within budget; no fit → closest plan + overshoot amount |
+| "Gym meal, ≥20g protein, go easy on sodium" | Protein floor + sodium cap; violators ranked last with the gap shown |
+| "Which is better for my Meituan ¥40-14 voucher?" | Same-basis conversion onto the current cart; official vs group-buy final call |
+| "How much am I throwing away lately?" | Coupon scheduling: face value → realizable → doomed, in one pass |
+| "Use coupons if any, fine without" | Compares with coupons when present, without when not — never fabricates |
 
 ## Sample output
 
@@ -213,6 +279,9 @@ maimai-saver/
 ├── mcp-config.example.json             # Sanitized MCP config (env placeholder only)
 ├── workbuddy.md                        # WorkBuddy development session record
 ├── requirements-dev.txt                # Dev/test dependencies (pytest)
+├── pyproject.toml                      # Package metadata & pytest config
+├── demo.py                             # 30-second offline full-pipeline demo (no token; doubles as regression test)
+├── fixtures/                           # Demo snapshots shaped exactly like real MCP responses
 ├── config/
 │   └── mcp.example.json                # MCP client config example
 ├── install.ps1                         # One-click Windows installer (backs up, no token touch)
@@ -234,7 +303,7 @@ maimai-saver/
 ├── docs/
 │   ├── demo.html                       # GitHub Pages online calculator (no sign-in)
 │   └── assets/                         # README preview images (SVG)
-├── tests/                              # pytest unit tests (98 cases)
+├── tests/                              # pytest unit tests (113 cases)
 └── .github/                            # CI + Issue/PR templates
 ```
 
@@ -393,8 +462,26 @@ python scripts/mcd.py call query-my-coupons --raw > coupons.json
 python scripts/mcd.py call order-list --raw > orders.json
 python scripts/mcd.py call query-my-account --raw > points.json
 python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
-python scripts/silent_cost.py demo      # offline demo
+python scripts/silent_cost.py report --coupons coupons.json --probe --store-code ST00123   # probe exact value of faceless coupons
+python scripts/silent_cost.py report --coupons coupons.json --html report.html             # shareable single-file HTML report
+python scripts/silent_cost.py demo      # offline demo (--html works here too)
 ```
+
+`--probe`: faceless coupons are probed via the official calculate-price using
+their product code + couponId — measured first, estimate as fallback, failures
+honestly flagged. `--html`: zero-dependency single-file report, open and
+screenshot-ready (no external resources, no scripts).
+
+### demo.py (30-second offline full pipeline, v1.6)
+
+```bash
+python demo.py                      # full 4-step check: claim → pick → price → points → schedule → cross-channel
+python demo.py --section price      # view a single section
+```
+
+Reads `fixtures/` snapshots in the exact same shape as real MCP responses; its
+output is asserted by `tests/test_demo_pipeline.py` — **the demo doubles as a
+regression test**.
 
 ## Configuration
 
@@ -483,9 +570,9 @@ non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disc
 
 ```bash
 # Syntax check (same as CI)
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py
+python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py demo.py
 
-# Install dev dependencies and run unit tests (98 cases, no network required)
+# Install dev dependencies and run unit tests (113 cases, no network required)
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```

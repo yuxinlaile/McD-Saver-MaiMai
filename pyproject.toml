@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maimai-saver"
+version = "1.6.0"
+description = "麦麦省钱助手 —— 基于麦当劳中国官方 MCP 的省钱点餐 Agent Skill / CLI（下单前强制省钱四步检查）"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "yuxinlaile" }]
+keywords = ["mcp", "mcdonalds", "coupon", "price-comparison", "agent-skill"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Office/Business :: Financial",
+]
+dependencies = []  # 运行时零第三方依赖（承诺见 README 徽章）
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools]
+packages = []  # 脚本式项目：按 README 克隆即用，pip install 仅提供元数据与 pytest 配置
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

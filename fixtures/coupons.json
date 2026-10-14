@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"couponId": "C3", "couponName": "满30减6", "parValue": 6.0, "validityEndTime": "2026-10-13 23:59:59"},
+    {"couponId": "C1", "couponName": "到店取餐9折券", "parValue": 3.35, "validityEndTime": "2026-10-14 23:59:59"},
+    {"couponId": "C2", "couponName": "满40减10", "parValue": 10.0, "validityEndTime": "2026-10-17 23:59:59"}
+  ]
+}
