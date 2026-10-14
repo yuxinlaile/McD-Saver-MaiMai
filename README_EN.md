@@ -29,7 +29,6 @@
   - [Installation](#installation)
 - [Usage](#usage)
   - [Command cheat sheet](#command-cheat-sheet)
-  - [Real output](#real-output)
   - [Cross-channel example](#cross-channel-example)
 - [Configuration](#configuration)
 - [Tool coverage](#tool-coverage)
@@ -165,13 +164,6 @@ never fabricate discounts**.
 > **`claim` safety boundary**: user-initiated, single-shot, always confirms with `y`
 > (`--yes` for scripting); no cron jobs or unattended background mode, in line with
 > platform risk-control requirements.
-
-### Real output
-
-<div align="center">
-<img src="docs/assets/terminal-demo.svg" alt="python demo.py real output" width="680" />
-<p><sub>↑ Actual output of <code>python demo.py</code>, unedited — run it yourself (the demo doubles as a regression test)</sub></p>
-</div>
 
 ### Cross-channel example
 
