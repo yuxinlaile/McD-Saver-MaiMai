@@ -213,7 +213,20 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 | 辅助 | `now-time-info` `campaign-calendar` |
 
 完整说明见 [`references/tools.md`](references/tools.md)；工作流详解见
-[`references/workflows.md`](references/workflows.md) 与 [`SKILL.md`](SKILL.md)。
+[`references/workflows.md`](references/workflows.md) 与 [`SKILL.md`](SKILL.md)；
+接入实战踩坑（响应格式/单位/多态字段/时效性）见
+[`references/mcp-pitfalls.md`](references/mcp-pitfalls.md)。
+
+## 能力现状
+
+| 状态 | 项 |
+|---|---|
+| ✅ 已验证 | 35 工具连通与全生命周期 · 四步检查全链路（fixtures 回归 113 测试）· calculate-price 双价对比 · claim 交互确认流 |
+| 🔜 待真实环境复核 | `--probe` 券面值实测（代码与测试就绪，待真实 Token 运行留档至 [verified-run](examples/verified-run.md)） |
+| ⚠️ 已知限制 | 团购比价为同口径估算（平台无公开 API）· 营养约束依赖菜单 nutrition 字段完整性 · 仅中国大陆 · 单用户非商业用途 |
+
+**订单安全**：用户明确确认前绝不创建订单；创建订单 ≠ 支付成功，
+支付始终在麦当劳官方页面完成。
 
 ## 常见问题
 
