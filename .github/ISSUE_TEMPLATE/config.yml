@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 使用咨询 / 讨论
-    url: https://github.com/yuxinlaile/maimai-saver/discussions
+    url: https://github.com/yuxinlaile/McD-saver/discussions
     about: 安装问题、使用心得、比价数据分享等，欢迎到 Discussions 交流
   - name: 🍟 麦麦省官方 MCP 仓库
     url: https://github.com/M-China/mcd-mcp-server

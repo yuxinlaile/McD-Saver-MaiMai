@@ -467,9 +467,9 @@ _HTML_TMPL = """<!DOCTYPE html>
   <h2>【三】积分体检</h2>
   {points_block}
 </div>
-<footer>maimai-saver · 社区开源项目，与麦当劳公司无关联<br>
-<a href="https://github.com/yuxinlaile/maimai-saver">GitHub 仓库</a> ·
-<a href="https://yuxinlaile.github.io/maimai-saver/demo.html">在线试算</a> · 卡号/Token 已脱敏，可安全截图</footer>
+<footer>McD Saver (maimai-saver) · 社区开源项目，与麦当劳公司无关联<br>
+<a href="https://github.com/yuxinlaile/McD-saver">GitHub 仓库</a> ·
+<a href="https://yuxinlaile.github.io/McD-saver/demo.html">在线试算</a> · 卡号/Token 已脱敏，可安全截图</footer>
 </body>
 </html>
 """
