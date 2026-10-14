@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-label="麦麦省钱助手 MaiMai Saver">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-label="McD Saver (MaiMai) 麦麦省钱助手">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#7c2d12"/>
@@ -8,7 +8,7 @@
   </defs>
   <rect width="960" height="240" rx="16" fill="url(#bg)"/>
   <text x="60" y="86" font-family="ui-monospace, Consolas, 'Courier New', monospace" font-size="20" fill="#ffedd5" letter-spacing="2">🍟 McDONALD'S CHINA MCP · COMMUNITY SKILL</text>
-  <text x="58" y="140" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="44" font-weight="bold" fill="#ffffff">麦麦省钱助手 MaiMai Saver</text>
+  <text x="58" y="140" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="44" font-weight="bold" fill="#ffffff">McD Saver (MaiMai) 麦麦省钱助手</text>
   <text x="60" y="182" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="19" fill="#fff7ed">领券 → 选券 → 比价 → 积分抵扣评估 —— 让 AI 帮你用最少的钱吃麦当劳</text>
   <text x="60" y="214" font-family="ui-monospace, Consolas, monospace" font-size="14" fill="#fed7aa">35 official tools · zero dependencies · 113 unit tests · MIT</text>
   <rect x="700" y="60" width="200" height="46" rx="23" fill="#ffffff" opacity="0.16"/>
