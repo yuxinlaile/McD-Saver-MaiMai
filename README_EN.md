@@ -4,38 +4,60 @@
 
 <img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
 
-**The same McCombo costs ¥43.5 à la carte, ¥33.5 as a set meal, even less with a group-buy — let a deterministic algorithm find the gap, and reclaim the coupons expiring in your wallet.**
+**The same combo costs ¥43.5 à la carte, ¥33.5 as a set meal — let a deterministic algorithm find the gap, and reclaim the coupons expiring in your wallet.**
 
-Built on McDonald's China official MCP Server (integration guide:
-[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)), covering
-**35 official tools** across stores, menus, ordering, orders, coupons, points
-mall, lottery and themed events.
+[![Live Demo](https://img.shields.io/badge/%F0%9F%8E%AE_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
+[![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
+![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-orange)
+![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
-<div align="center">
-
-| 🍟 Saved per order | 💸 Expiring coupons | 🧮 Pricing | 🔥 Nutrition caps | 🎮 No-token demo |
-|:---:|:---:|:---:|:---:|:---:|
-| **¥6 ~ ¥13** | **tens of ¥ at once** | official calculate-price per plan | budget/kcal/protein/sodium | [Online demo](https://yuxinlaile.github.io/maimai-saver/demo.html) · [Offline](#usage-and-commands) |
+**[🎮 30-sec online demo (no sign-in)](https://yuxinlaile.github.io/maimai-saver/demo.html) · [📦 Quick start](#quick-start) · [💬 Discussions](https://github.com/yuxinlaile/maimai-saver/discussions) · [简体中文](README.md)**
 
 </div>
 
-**Core methodology**: before every order, a mandatory **4-step money-saving
-check** — claim coupons → pick coupons → dual-price comparison → points
-redemption evaluation. Every quote comes with a savings breakdown
-(list price / discount / payable / saved).
+---
 
-**🍟 30-second start (no token, no network)**:
-[online calculator](https://yuxinlaile.github.io/maimai-saver/demo.html) (no sign-in, one-click real-menu import) ·
-`git clone` then `python demo.py` (offline full-pipeline demo, real output below)
+## Table of contents
 
-<div align="center">
-<img src="docs/assets/terminal-demo.svg" alt="python demo.py real output — full 4-step pipeline" width="680" />
-<p><sub>↑ Actual output of <code>python demo.py</code>, unedited — run it yourself (the demo doubles as a regression test)</sub></p>
-</div>
+- [Project overview](#project-overview)
+- [Features](#features)
+- [Quick start](#quick-start)
+  - [30 seconds, no token](#30-seconds-no-token)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Command cheat sheet](#command-cheat-sheet)
+  - [Real output](#real-output)
+  - [Cross-channel example](#cross-channel-example)
+- [Configuration](#configuration)
+- [Tool coverage](#tool-coverage)
+- [FAQ](#faq)
+- [Contributing](#contributing)
+- [Disclaimer](#disclaimer)
+- [License](#license)
+- [Star History](#star-history)
 
-## What we did differently
+## Project overview
 
-Similar tools exist; here is exactly how ours differs:
+MaiMai Saver is a McDonald's ordering assistant with one goal — saving money.
+**It does not order for you; it enforces a savings check before every order**:
+claim all claimable coupons, pick the best coupon for your cart, run a
+dual-price comparison via the official `calculate-price`, evaluate points
+redemption, then show the full savings breakdown (list price / discount /
+payable / saved) for your confirmation.
+
+One repo, three ways to use it:
+
+- **Agent Skill**: a `SKILL.md` following the open standard — drop into
+  WorkBuddy / Claude Code / Cursor / Codex;
+- **Standalone CLI**: `scripts/mcd.py` talks to the official MCP Server
+  (integration guide: [M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)),
+  no client required;
+- **Online calculator**: pure front-end, no sign-in, one-click real-menu import.
+
+**What we did differently** — similar tools exist; here is exactly how ours differs:
 
 | Common approach | Our approach | Why it matters |
 |---|---|---|
@@ -50,128 +72,149 @@ Similar tools exist; here is exactly how ours differs:
 > **Core differentiator: others optimize inside one channel; we put the official
 > app, Meituan, Douyin and the points mall on the same table and compute the endgame.**
 
-```mermaid
-flowchart TD
-    U[User: wants X · budget Y · kcal Z · protein P] --> A[Agent / CLI]
-    A -->|claim first| M[McDonald's official MCP<br/>mcp.mcd.cn]
-    A -->|menu / coupons / nutrition| M
-    A -->|calculate-price per plan| M
-    A --> O[optimizer.py<br/>deterministic combos + 4-dim constraints]
-    A --> D[deal_compare.py<br/>group-buy same-basis estimates]
-    A --> S[silent_cost.py<br/>silent cost + coupon scheduling]
-    O --> R[Cross-channel final call<br/>+ savings breakdown]
-    D --> R
-    S --> R
-    R --> Q{User confirms?}
-    Q -->|yes| C[create-order]
-    Q -->|no| R
+## Features
+
+**💰 4-step savings check** (core methodology, agent-driven)
+
+- Claim first → store-level coupon selection → dual-price comparison → points evaluation
+- Every discount must come from actual official tool responses — **never fabricated**
+
+**🧮 Coupon combination optimizer** (`optimizer.py`)
+
+- Deterministic enumeration of "no-coupon / single-coupon / add-on / set-meal-swap" candidates, priced and ranked per plan
+- 4-dimension constraints: `--budget` / `--max-kcal` / `--min-protein` / `--max-sodium`
+- Violators ranked last with the gap shown; missing data honestly flagged as unknown — **never silently filtered**
+
+**📉 Cross-channel comparison engine** (`deal_compare.py`)
+
+- User-entered Meituan/Douyin deals (those platforms have no public APIs — no scraping) compared against official prices on the same basis
+- Final "official vs group-buy" call with stacking rules and restrictions spelled out
+
+**🩺 Silent-cost check** (`silent_cost.py`)
+
+- Expiring-coupon scan + **coupon scheduling** (expiry window × order frequency → realizable vs doomed value)
+- Order-history profile (avg ticket / repeat items) + points shadow price
+- Faceless coupons probed via `--probe`; `--html` generates a shareable single-file report
+
+**🛡️ Security & compliance**
+
+- Token resolved from env var / file / CLI arg, never logged
+- 401 fails fast; 429 exponential backoff honoring `Retry-After`; 5xx/network auto-retry
+- Explicitly not doing: scraping, auto-ordering, unattended claiming, star manipulation
+
+**🧪 Tested**: 113 unit tests covering SSE parsing, token resolution, backoff math,
+comparison decisions, combination optimization and CLI exit codes; the full
+`demo.py` pipeline is asserted by `tests/test_demo_pipeline.py` — **the demo
+doubles as a regression test**.
+
+## Quick start
+
+### 30 seconds, no token
+
+```bash
+git clone https://github.com/yuxinlaile/maimai-saver.git
+cd maimai-saver
+python demo.py          # offline full pipeline: claim → pick → price → points → schedule → cross-channel
 ```
 
+Or open the [online calculator](https://yuxinlaile.github.io/maimai-saver/demo.html)
+(no sign-in; 31 menu items / 9 coupons / 6 group-buy samples; paste your MCP
+`query-meals` output to import the real menu in one click).
 
-[![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
-![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-orange)
-![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
+### Installation
 
-[简体中文](README.md) · English
+**Step 1 · Get an MCP Token** (needed for options 1–2; the offline demo and the
+online calculator don't need one)
 
+1. Open <https://open.mcd.cn/mcp>, sign in (phone verification, mainland China only)
+2. Console → Activate → accept the agreement → copy the MCP Token
+
+**Step 2 · Pick one option**
+
+| Option | Best for | How |
+|---|---|---|
+| **Option 1 · MCP client** | WorkBuddy / Cursor / Claude Code users | Replace `${MCD_MCP_TOKEN}` in [`config/mcp.example.json`](config/mcp.example.json) with your token, paste into your client's MCP settings (locations under [Configuration](#configuration)), enable `mcd-mcp` |
+| **Option 2 · Agent Skill** | Agent-triggered savings checks | `git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver` (Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`), plus the MCP connection from option 1; per-platform details in [agent-skill-installation.md](references/agent-skill-installation.md) |
+| **Option 3 · Standalone CLI** | Scripts and debugging, no client | `export MCD_MCP_TOKEN="your-token"` (or write it to `~/.mcd_mcp_token`), then `python scripts/mcd.py check` |
+
+Once installed, the agent follows `SKILL.md` and obeys four conduct rules:
+**query before write / confirm before ordering / always run the savings check /
+never fabricate discounts**.
+
+## Usage
+
+### Command cheat sheet
+
+| Command | What it does |
+|---|---|
+| `python demo.py` | **30-sec offline full pipeline** (no token; `--section price` for one section) |
+| `python scripts/mcd.py check` | Verify token & connectivity |
+| `python scripts/mcd.py tools` | List all 35 official tools |
+| `python scripts/mcd.py schema <tool>` | Inspect a tool's input schema |
+| `python scripts/mcd.py call <tool> --arg k=v` | Call an official tool (`--raw` for raw output) |
+| `python scripts/mcd.py claim` | Claim available coupons (list → confirm → bind) |
+| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | Combination optimizer; `--budget/--max-kcal/--min-protein/--max-sodium` constraints |
+| `python scripts/deal_compare.py add/list/compare` | Record group-buys & cross-channel comparison |
+| `python scripts/silent_cost.py report --coupons c.json --orders o.json --points p.json` | Silent-cost check; `--probe` measures coupon value / `--html` generates a shareable report |
+
+**CLI exit codes** (mcd.py): `0` ok · `1` tool error · `2` auth · `3` rate-limited · `4` network
+(deal_compare.py: `0` ok · `1` usage/data error · `2` empty library)
+
+**Global options**: `--token`, `--url`, `--timeout` (default 30s), `--retries` (default 3), `--verbose`.
+
+> **`claim` safety boundary**: user-initiated, single-shot, always confirms with `y`
+> (`--yes` for scripting); **no cron jobs, no unattended background mode** — that
+> looks like bot traffic and risks token bans.
+
+### Real output
+
+<div align="center">
+<img src="docs/assets/terminal-demo.svg" alt="python demo.py real output" width="680" />
+<p><sub>↑ Actual output of <code>python demo.py</code>, unedited — run it yourself (the demo doubles as a regression test)</sub></p>
 </div>
 
----
+### Cross-channel example
 
-## Table of contents
+```bash
+# Record a group-buy deal you found on Meituan
+python scripts/deal_compare.py add \
+    --platform meituan --title "McDonald's ¥40-14 voucher" \
+    --price 25.9 --face 40 --channel store --time limited \
+    --valid-until 2026-11-30 --notes "1 per day"
 
-- [Project overview](#project-overview)
-- [Disclaimer](#disclaimer)
-- [Core features](#core-features)
-- [Tool coverage](#tool-coverage)
-- [Tech stack](#tech-stack)
-- [Target users](#target-users)
-- [Sample output](#sample-output)
-- [Repository layout](#repository-layout)
-- [Requirements](#requirements)
-- [Installation](#installation)
-  - [Get an MCP Token](#get-an-mcp-token)
-  - [Option A: connect via an MCP client](#option-a-connect-via-an-mcp-client)
-  - [Option B: install as an Agent Skill](#option-b-install-as-an-agent-skill)
-  - [Option C: standalone CLI](#option-c-standalone-cli)
-  - [Option D: cross-channel comparison](#option-d-cross-channel-comparison)
-- [Usage and commands](#usage-and-commands)
-- [Configuration](#configuration)
-- [FAQ](#faq)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Star History](#star-history)
-- [License](#license)
+# Same-basis comparison against the official price (face 48.5 / payable 38.5)
+python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
+```
 
-## Project overview
+> Results are local estimates (group-buy platforms have no public APIs);
+> methodology in [group-buy-comparison.md](references/group-buy-comparison.md).
+> The data layer reserves the `MAIMAI_DEALS_PROVIDER` env var as a plug-in point.
 
-MaiMai Saver is a money-saving-first Agent Skill for McDonald's ordering:
-instead of simply placing orders, it **enforces a savings check before every
-order** — claim all claimable coupons, pick the best coupon for the current
-cart, run a dual-price comparison with `calculate-price`, evaluate whether
-points redemption is a better deal, then show the savings breakdown
-(list price, discount, payable, saved percentage) for your confirmation.
+## Configuration
 
-The project ships three components:
+**Config files**
 
-- **Agent Skill**: a `SKILL.md` following the open Agent Skills standard,
-  installable as-is into WorkBuddy / Claude Code / Cursor / OpenAI Codex;
-- **Standalone CLI**: `scripts/mcd.py` talks to the official MCP Server
-  directly, no MCP client required — ideal for scripts and automation;
-- **Cross-channel comparison engine**: `scripts/deal_compare.py` compares
-  user-entered McDonald's group-buy deals (Meituan/Douyin) against official
-  prices on the same basis and outputs a decision recommendation.
+| File | Purpose |
+|---|---|
+| `config/mcp.example.json` | MCP client template (`${MCD_MCP_TOKEN}` placeholder) |
+| `mcp-config.example.json` | Root sanitized config (contest requirement) |
 
-## Disclaimer
+**Environment variables**
 
-- This is a **community open-source project with no affiliation with, nor
-  endorsement from, McDonald's Corporation or its affiliates**.
-- Using the McDonald's MCP service is subject to McDonald's China Terms of Use
-  and the McDonald's MCP Service Rules; mainland China only (excluding Hong
-  Kong, Macao and Taiwan), personal non-commercial use only.
-- Provided "as is" without any guarantee of availability or accuracy. All
-  savings figures come from actual tool responses; group-buy figures are
-  local estimates from user-entered data.
-- "McDonald's", "麦当劳", "麦乐送", "麦麦" and related marks belong to their
-  respective owners; this project grants no trademark rights.
+| Variable | Description |
+|---|---|
+| `MCD_MCP_TOKEN` | MCP Token (highest priority) |
+| `MCD_MCP_TOKEN_FILE` | Token file path, default `~/.mcd_mcp_token` |
+| `MCD_MCP_URL` | MCP Server URL, default `https://mcp.mcd.cn` |
+| `MAIMAI_DEALS_FILE` | Deal library path, default `~/.maimai_saver/deals.json` |
+| `MAIMAI_DEALS_PROVIDER` | External data-source module path (implements `load_deals()`), optional |
 
-## Core features
+**MCP client locations**: WorkBuddy `~/.workbuddy/mcp.json` · Cursor Settings → Tools & MCP ·
+Cherry Studio / Trae / VSCode / Kiro own MCP settings pages · Codex `[mcp_servers.mcd-mcp]`
+in `~/.codex/config.toml`.
 
-- **Savings-first**: built-in 4-step check and 11 saving strategies — coupon
-  claiming, store-level coupon selection, dual-price comparison, points
-  redemption evaluation, zero-cost combo swaps, campaign intel, free-draw
-  reminders, group-meal promotions, survey-coupon recovery, card value assessment
-- **Cross-channel comparison**: user-entered Meituan/Douyin deals (those
-  platforms have no public APIs) compared against official prices on the same
-  basis, with stacking rules and restrictions spelled out
-- **Zero dependencies**: the core MCP client uses only the Python 3.9+ standard library
-- **Full MCP lifecycle**: `initialize` → `tools/list` → `tools/call`, automatic
-  `Mcp-Session-Id` session handling, both `application/json` and
-  `text/event-stream` responses
-- **Production-grade error handling**: 401 fails fast without retries; 429
-  exponential backoff with jitter honoring `Retry-After`; 5xx/network
-  auto-retry; structured `McpToolError` for tool errors
-- **Agent Skill ready**: `SKILL.md` ships triggers, workflows and conduct rules
-  ("query before write / confirm before ordering / always run the savings check /
-  never fabricate discounts / transparent comparisons")
-- **Secure by design**: token resolved from CLI arg / env var / file, never logged
-- **Combination optimizer**: enumerates "no-coupon / single-coupon / add-on
-  threshold" candidate plans; `--mcp` mode verifies every plan with the official
-  calculate-price, with no-add-on as the baseline and mandatory add-on caveats;
-  multi-dimension constraints for budget / kcal / protein floor / sodium cap
-  (v1.5), violators ranked last & flagged honestly
-- **Silent-cost check**: expiring-coupon face-value total + **coupon scheduling**
-  (expiry window × order frequency → realizable vs doomed value) + order-history
-  profile + points expiry + **single-file shareable HTML report** — answers
-  "how much are you throwing away?"
-- **Honest coupon valuation**: faceless coupons probed via calculate-price
-  (product code + couponId); measured first, estimate as fallback, failures flagged
-- **Tested**: 113 unit tests covering SSE parsing, token resolution, backoff math,
-  comparison decisions, combination optimization and CLI exit codes
+**Token security**: provide the token via env var, token file or `--token` only;
+never commit it, never let it appear in logs. If leaked, re-apply at open.mcd.cn/mcp immediately.
 
 ## Tool coverage
 
@@ -187,415 +230,66 @@ The project ships three components:
 | Themed events | `query-party-city` `query-party-store` `query-partystore-date` `query-partystore-session` `party-order-create` |
 | Utilities | `now-time-info` `campaign-calendar` |
 
-Full catalog and usage notes: [`references/tools.md`](references/tools.md).
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Language/runtime | Python 3.9+ (standard library only: `urllib` / `json` / `argparse` / `datetime` / `uuid`) |
-| Protocol | MCP Streamable HTTP + JSON-RPC 2.0 (SSE and JSON responses) |
-| Testing | pytest (dev dependency, see `requirements-dev.txt`) |
-| CI | GitHub Actions (syntax check + unit tests, Python 3.9/3.11/3.13 matrix) |
-| Runtime third-party dependencies | **None** |
-
-## Target users
-
-| User | Typical usage |
-|---|---|
-| Frequent McDonald's customers | Automatic coupon claiming and best-price comparison on every order |
-| Students / budget-conscious users | Combine group-buy deals with points redemption |
-| Fitness / calorie-conscious users | Savings within a calorie budget via nutrition data |
-| Group-buy app users | Manage McDonald's vouchers and compare against official deals |
-| Office admins / group meals | Group-meal promotions and catering services |
-| Agent / productivity tinkerers | Load the repo as an Agent Skill (WorkBuddy, Claude Code, ...) |
-
-### What else you can ask
-
-| You say | What it handles |
-|---|---|
-| "Under ¥40, burger and a drink" | Enumerates within budget; no fit → closest plan + overshoot amount |
-| "Gym meal, ≥20g protein, go easy on sodium" | Protein floor + sodium cap; violators ranked last with the gap shown |
-| "Which is better for my Meituan ¥40-14 voucher?" | Same-basis conversion onto the current cart; official vs group-buy final call |
-| "How much am I throwing away lately?" | Coupon scheduling: face value → realizable → doomed, in one pass |
-| "Use coupons if any, fine without" | Compares with coupons when present, without when not — never fabricates |
-
-## Sample output
-
-Try it online (no sign-in): <https://yuxinlaile.github.io/maimai-saver/demo.html>
-
-The demo page ships with 31 menu items (7 categories, incl. breakfast), 9 coupons,
-6 Meituan/Douyin group-buy deals, a cross-channel final recommendation, and
-**one-click real-menu import** — paste the raw MCP `query-meals` output to replace
-the sample data wholesale, the compliant way to sync the full official menu.
-
-Coupon combination optimization (`optimizer.py`):
-
-<div align="center">
-<img src="docs/assets/optimizer-report.svg" alt="Coupon combination optimization sample" width="720" />
-</div>
-
-Cross-channel comparison report (`deal_compare.py compare`):
-
-<div align="center">
-<img src="docs/assets/compare-report.svg" alt="Cross-channel comparison report sample" width="720" />
-</div>
-
-<details>
-<summary>View the text version (excerpt)</summary>
-
-```text
-========================================================================
-麦麦省钱助手 · 全渠道比价报告（生成日期: 2026-10-10）
-========================================================================
-官方渠道方案：商品合计原价 ¥48.50，MCP 带券最优实付 ¥38.50（折扣率 79.4%）
-
-团购券比价（按估算到手价升序，所有金额均为估算值）：
-------------------------------------------------------------------------
-  [81bb4c] meituan | 麦当劳满40减14代金券
-      售价 ¥25.90 / 面值 ¥40.00 = 折扣率 64.8% | 同内容估算到手 ¥31.40 | 对比官方 +7.10 元
-      限制: 仅堂食核销；限时段使用；2026-11-30前有效；每日限用1张
-
-推荐决策（估算，实际以各平台页面与麦当劳官方渠道为准）：
-  ✔ 建议使用团购券：麦当劳满40减14代金券（meituan）
-    估算到手 ¥31.40，较官方渠道方案节省约 ¥7.10。
-    注意：团购券通常不可叠加麦当劳官方优惠券，且需在适用门店/时段内核销；
-    若本次订单内容未被该券覆盖，估算不成立，请以券详情页为准。
-```
-
-</details>
-
-## Repository layout
-
-```
-maimai-saver/
-├── SKILL.md                            # Agent Skill entry: methodology & rules
-├── README.md / README_EN.md            # Project docs (Chinese / English)
-├── CHANGELOG.md                        # Version history
-├── CONTRIBUTING.md                     # Contribution guide (channels / PR flow / red lines)
-├── LICENSE                             # MIT + third-party notice
-├── CONTEST_DECLARATION.md              # Contest declaration (official, unmodified)
-├── MCP_INTEGRATION.md                  # MCP integration: server/tools/flows/value
-├── mcp-config.example.json             # Sanitized MCP config (env placeholder only)
-├── workbuddy.md                        # WorkBuddy development session record
-├── requirements-dev.txt                # Dev/test dependencies (pytest)
-├── pyproject.toml                      # Package metadata & pytest config
-├── demo.py                             # 30-second offline full-pipeline demo (no token; doubles as regression test)
-├── fixtures/                           # Demo snapshots shaped exactly like real MCP responses
-├── config/
-│   └── mcp.example.json                # MCP client config example
-├── install.ps1                         # One-click Windows installer (backs up, no token touch)
-├── scripts/
-│   ├── mcd_client.py                   # MCP Streamable HTTP client (stdlib only)
-│   ├── mcd.py                          # CLI: check / tools / schema / call / claim
-│   ├── deal_compare.py                 # Cross-channel comparison engine
-│   ├── optimizer.py                    # Coupon combination optimizer (estimate / --mcp modes)
-│   └── silent_cost.py                  # Silent-cost check (coupons/orders/points)
-├── references/
-│   ├── tools.md                        # Catalog of all 35 tools
-│   ├── money-saving-strategies.md      # 11 saving strategies (core reference)
-│   ├── agent-skill-installation.md     # WorkBuddy/Claude Code/Cursor/Codex install guide
-│   ├── group-buy-comparison.md         # Cross-channel comparison methodology
-│   ├── workflows.md                    # Business workflows
-│   └── error-handling.md               # Errors, retries & troubleshooting
-├── examples/
-│   └── order-flow-example.md           # Full annotated ordering session
-├── docs/
-│   ├── demo.html                       # GitHub Pages online calculator (no sign-in)
-│   └── assets/                         # README preview images (SVG)
-├── tests/                              # pytest unit tests (113 cases)
-└── .github/                            # CI + Issue/PR templates
-```
-
-## Requirements
-
-| Item | Requirement |
-|---|---|
-| Python | 3.9 or higher (standard library is enough to run) |
-| MCP Token | Free at [open.mcd.cn/mcp](https://open.mcd.cn/mcp) (mainland China phone verification) |
-| Network | Access to `https://mcp.mcd.cn` (McDonald's MCP service, mainland China only) |
-| MCP client | Optional (WorkBuddy / Cursor / Claude Code / Codex; needed for Options A/B only) |
-| Rate limit | 600 requests per minute per token |
-
-## Installation
-
-Pick what fits: Options A/B target agent conversations, Option C suits scripts
-and debugging, Option D is an optional savings booster. All of them require
-the MCP token below.
-
-### Get an MCP Token
-
-1. Open <https://open.mcd.cn/mcp>, sign in (phone verification)
-2. Console → Activate → accept the agreement → copy the MCP Token
-
-### Option A: connect via an MCP client
-
-Replace `${MCD_MCP_TOKEN}` in [`config/mcp.example.json`](config/mcp.example.json)
-with your token, paste it into your MCP client and enable the `mcd-mcp` server;
-client-specific locations are listed under [Configuration](#configuration).
-Once connected, all 35 tools are exposed automatically.
-
-### Option B: install as an Agent Skill
-
-The repo follows the open Agent Skills standard (SKILL.md) and installs as-is
-into WorkBuddy, Claude Code, Cursor and OpenAI Codex:
-
-| Platform | Project scope | User scope | Explicit invoke |
-|---|---|---|---|
-| WorkBuddy | `.workbuddy/skills/` | `~/.workbuddy/skills/` | auto-triggered |
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` | `/maimai-saver` |
-| Cursor | `.cursor/skills/`, `.agents/skills/` | `~/.cursor/skills/`, `~/.agents/skills/` | `/maimai-saver` |
-| OpenAI Codex | `.agents/skills/` | `~/.agents/skills/` | `$maimai-saver`, `/skills` |
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver
-# Cursor: ~/.cursor/skills/ · Codex: ~/.agents/skills/ · WorkBuddy: ~/.workbuddy/skills/
-```
-
-The skill still needs the `mcd-mcp` MCP connection from
-[Option A](#option-a-connect-via-an-mcp-client) to call real tools.
-Per-platform details: [`references/agent-skill-installation.md`](references/agent-skill-installation.md).
-
-Once installed, the agent follows the triggers and workflows defined in
-`SKILL.md` and obeys four conduct rules:
-
-1. **Query before write** — gather full context before any mutating call.
-2. **Confirm before ordering** — show key details and get explicit confirmation;
-   payment links are passed through untouched, users pay themselves.
-3. **Always run the savings check** — coupons → selection → dual-price
-   comparison → points evaluation, with a savings breakdown.
-4. **Never fabricate discounts** — every discount must come from actual tool
-   responses such as `calculate-price`.
-
-### Option C: standalone CLI
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git
-cd maimai-saver
-
-# Provide the token (choose one)
-export MCD_MCP_TOKEN="your-token"          # env var (recommended)
-echo "your-token" > ~/.mcd_mcp_token        # or a token file
-# or pass --token "your-token" on every call
-
-python scripts/mcd.py check                # verify token & connectivity
-```
-
-### Option D: cross-channel comparison
-
-```bash
-# Record a McDonald's group-buy deal you found on Meituan/Douyin
-python scripts/deal_compare.py add \
-    --platform meituan --title "McDonald's ¥40-14 voucher" \
-    --price 25.9 --face 40 --channel store --time limited \
-    --valid-until 2026-11-30 --notes "1 per day"
-
-# Compare against the official price (face 48.5 / best payable 38.5)
-python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
-```
-
-> Results are local estimates (group-buy platforms have no public APIs; data is
-> user-entered). Methodology: [`references/group-buy-comparison.md`](references/group-buy-comparison.md).
-> The data layer supports the `MAIMAI_DEALS_PROVIDER` env var as a plug-in point
-> for future official APIs.
-
-## Usage and commands
-
-### mcd.py (official MCP tools)
-
-```bash
-python scripts/mcd.py check                  # verify token & connectivity
-python scripts/mcd.py tools                  # list all 35 tools
-python scripts/mcd.py schema query-meals     # inspect a tool's input schema
-python scripts/mcd.py call query-nearby-stores --arg address="..."   # key=value args
-python scripts/mcd.py call query-meals --args '{"storeCode": "..."}' --raw
-python scripts/mcd.py claim                # claim McDonald's coupons (list → confirm → bind)
-```
-
-**CLI exit codes**: `0` ok · `1` tool error · `2` auth · `3` rate-limited · `4` network
-
-Global options: `--token`, `--url`, `--timeout` (default 30s), `--retries`
-(default 3), `--verbose` — usable before or after the subcommand.
-
-> **`claim` safety boundary**: user-initiated, single-shot, always shows the list
-> and asks for a `y` confirmation before binding (`--yes` skips the prompt for
-> scripting). **No cron jobs, no unattended background mode** — scheduled
-> automation looks like bot traffic to risk control and risks token bans;
-> this project deliberately does not do it.
-
-### deal_compare.py (cross-channel comparison)
-
-```bash
-python scripts/deal_compare.py add ...       # record a group-buy deal
-python scripts/deal_compare.py list          # list the deal library (with validity check)
-python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
-```
-
-Exit codes: `0` ok · `1` usage/data error · `2` empty deal library.
-
-### optimizer.py (coupon combination optimization)
-
-```bash
-# Estimate mode (local pricing, output marked "unverified")
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json
-# Real pricing mode (official calculate-price per plan; requires --store-code)
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --mcp --store-code ST00123
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --budget 30 --max-kcal 800   # optional budget/kcal caps; violators ranked last & flagged
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --min-protein 20 --max-sodium 1500   # optional protein floor / sodium cap (v1.5; needs protein/sodium fields)
-python scripts/optimizer.py demo        # offline demo
-```
-
-Menu items may carry optional `kcal` (from list-nutrition-foods) and `contains`
-(combo contents, used to generate "swap to set meal" candidates). Since v1.5
-items may also carry `protein` (g) / `sodium` (mg) for `--min-protein` /
-`--max-sodium` constraints — plans with missing nutrition data are treated as
-non-compliant and flagged honestly, never fabricated as passing. Data file
-formats are documented in the script docstring and SKILL.md workflow 5.
-
-### silent_cost.py (silent-cost check)
-
-```bash
-python scripts/mcd.py call query-my-coupons --raw > coupons.json
-python scripts/mcd.py call order-list --raw > orders.json
-python scripts/mcd.py call query-my-account --raw > points.json
-python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
-python scripts/silent_cost.py report --coupons coupons.json --probe --store-code ST00123   # probe exact value of faceless coupons
-python scripts/silent_cost.py report --coupons coupons.json --html report.html             # shareable single-file HTML report
-python scripts/silent_cost.py demo      # offline demo (--html works here too)
-```
-
-`--probe`: faceless coupons are probed via the official calculate-price using
-their product code + couponId — measured first, estimate as fallback, failures
-honestly flagged. `--html`: zero-dependency single-file report, open and
-screenshot-ready (no external resources, no scripts).
-
-### demo.py (30-second offline full pipeline, v1.6)
-
-```bash
-python demo.py                      # full 4-step check: claim → pick → price → points → schedule → cross-channel
-python demo.py --section price      # view a single section
-```
-
-Reads `fixtures/` snapshots in the exact same shape as real MCP responses; its
-output is asserted by `tests/test_demo_pipeline.py` — **the demo doubles as a
-regression test**.
-
-## Configuration
-
-### Config files
-
-| File | Purpose |
-|---|---|
-| `config/mcp.example.json` | MCP client template (`${MCD_MCP_TOKEN}` env placeholder) |
-| `mcp-config.example.json` | Root sanitized config (contest requirement, env placeholder only) |
-
-### Environment variables
-
-| Variable | Description |
-|---|---|
-| `MCD_MCP_TOKEN` | MCP Token (highest-priority way to provide it) |
-| `MCD_MCP_TOKEN_FILE` | Token file path, default `~/.mcd_mcp_token` |
-| `MCD_MCP_URL` | MCP Server URL, default `https://mcp.mcd.cn` |
-| `MAIMAI_DEALS_FILE` | Deal library path, default `~/.maimai_saver/deals.json` |
-| `MAIMAI_DEALS_PROVIDER` | External data-source module path (implements `load_deals()`), optional |
-
-### MCP client locations
-
-| Client | Location |
-|---|---|
-| WorkBuddy | `~/.workbuddy/mcp.json` (or the connector management page) |
-| Cursor | Settings → Tools & MCP → mcp.json |
-| Cherry Studio / Trae / VSCode / Kiro | their MCP settings (JSON import) |
-| OpenAI Codex | `[mcp_servers.mcd-mcp]` section in `~/.codex/config.toml` |
-
-### Token security
-
-Provide the token via env var, token file or `--token` only; never commit it to
-the repository and never let it appear in logs or error messages. If leaked,
-re-apply for a new one at open.mcd.cn/mcp immediately.
+Full catalog: [`references/tools.md`](references/tools.md); workflows:
+[`references/workflows.md`](references/workflows.md) and [`SKILL.md`](SKILL.md).
 
 ## FAQ
 
-**Q1: HTTP 401 auth errors?**
-The token is invalid, expired or missing. Check `MCD_MCP_TOKEN` / token file /
-`--token`, and re-apply at <https://open.mcd.cn/mcp> if needed. 401 is never retried.
+**Q1: HTTP 401?** Token invalid/expired/missing. 401 is never retried; check the
+three channels and re-apply at [open.mcd.cn/mcp](https://open.mcd.cn/mcp).
 
-**Q2: Frequent HTTP 429 rate limits?**
-600 requests per minute per token. The CLI retries automatically with
-exponential backoff (honoring Retry-After); if it still fails, slow down and
-check for loops that call tools like `query-meal-detail` one by one.
+**Q2: HTTP 429?** 600 requests/min per token. The CLI retries with exponential
+backoff (honoring Retry-After); slow down and check for `query-meal-detail` loops.
 
-**Q3: Empty `tools` list?**
-Run `python scripts/mcd.py check` first; make sure `--url` / `MCD_MCP_URL` was
-not changed to something wrong.
+**Q3: Empty `tools` list?** Run `check` first; make sure `--url` / `MCD_MCP_URL` is correct.
 
-**Q4: Tool argument errors (McpToolError)?**
-Don't guess parameter names — run `python scripts/mcd.py schema <tool>` for the
-authoritative schema; pass through codes (storeCode, meal codes, couponId) from
-previous tool responses unchanged.
+**Q4: Tool argument errors?** Don't guess — `python scripts/mcd.py schema <tool>`;
+pass codes (storeCode, meal codes, couponId) through from previous responses unchanged.
 
-**Q5: Network errors or "unparseable response body"?**
-Network errors are retried automatically (default 3). If persistent, check your
-network/proxy and file an issue following
-[`references/error-handling.md`](references/error-handling.md) (no tokens).
+**Q5: Estimate mode vs `--mcp`?** Estimate mode computes locally, marked
+"unverified" — for quick comparison only; `--mcp` walks official calculate-price
+per plan (delivery fee and stacking included) and is the only mode that can
+guide an order.
 
-**Q6: Where does comparison data come from?**
-Meituan/Douyin have no public third-party APIs; deal data is entered manually
-into the local library. Results are estimates — actual prices are on the
-platform pages. External sources can plug in via `MAIMAI_DEALS_PROVIDER`.
+**Q6: Where does comparison data come from?** Meituan/Douyin have no public APIs;
+deals are user-entered, results are estimates. External sources plug in via
+`MAIMAI_DEALS_PROVIDER`.
 
-**Q7: Which agents are supported?**
-WorkBuddy, Claude Code, Cursor, OpenAI Codex (same SKILL.md, no changes needed).
-Install locations: [Option B](#option-b-install-as-an-agent-skill).
+**Q7: Which agents?** WorkBuddy, Claude Code, Cursor, OpenAI Codex (same SKILL.md).
 
-**Q8: How do I verify the skill is installed?**
-Start a new agent session and invoke it explicitly (e.g. `/maimai-saver`), then
-run `python scripts/mcd.py check` to verify MCP connectivity.
+**Q8: Usage restrictions?** Mainland China only (excluding Hong Kong, Macao and
+Taiwan), personal non-commercial use — see the disclaimer below.
 
-**Q9: Estimate mode vs --mcp real pricing in optimizer?**
-Estimate mode computes locally from menu prices and coupon threshold/discount fields,
-marked "unverified" — for quick comparison only. `--mcp` mode calls the official
-calculate-price for every plan (delivery fee and stacking rules included) and is the
-only mode whose result can guide an order. Before ordering, SKILL.md still requires a
-calculate-price re-check and your explicit confirmation.
-
-**Q10: Usage restrictions of the McDonald's MCP?**
-Mainland China only (excluding Hong Kong, Macao and Taiwan), personal
-non-commercial use, subject to McDonald's China terms — see [Disclaimer](#disclaimer).
-
-## Testing
-
-```bash
-# Syntax check (same as CI)
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py demo.py
-
-# Install dev dependencies and run unit tests (113 cases, no network required)
-pip install -r requirements-dev.txt
-python -m pytest tests/ -v
-```
-
-CI (`.github/workflows/ci.yml`) runs both on every push / PR (Python
-3.9 / 3.11 / 3.13 matrix).
+More troubleshooting: [`references/error-handling.md`](references/error-handling.md)
+(no tokens in issues, please).
 
 ## Contributing
 
-Issues and PRs are welcome: workflow docs, translation proofreading, tool
-catalog updates (McDonald's MCP iterates fast — the `tools` subcommand output
-is authoritative). Full process: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Issues / PRs / Discussions welcome: workflow docs, translation proofreading,
+tool catalog updates (the `tools` subcommand output is authoritative). Full
+process in [CONTRIBUTING.md](CONTRIBUTING.md); real-run evidence template in
+[examples/verified-run.md](examples/verified-run.md).
 
-- Issue templates: bug report, feature request (`.github/ISSUE_TEMPLATE/`)
-- PR template: `.github/PULL_REQUEST_TEMPLATE.md` (with a self-check list)
-- Usage questions / deal-data sharing: [Discussions](https://github.com/yuxinlaile/maimai-saver/discussions) (enabled)
+Before submitting: pytest passes · no tokens or credentials · `references/` and
+`SKILL.md` updated · CHANGELOG noted · **README zh & en in sync**.
 
-Before submitting:
+## Disclaimer
 
-1. `python -m pytest tests/` passes;
-2. no real tokens, passwords or personal credentials anywhere;
-3. tool catalog/workflow changes are reflected in `references/` and `SKILL.md`;
-4. user-facing changes are noted in `CHANGELOG.md`.
+This is a **community open-source project with no affiliation with, nor
+endorsement from, McDonald's Corporation or its affiliates**. Using the
+McDonald's MCP service is subject to McDonald's China Terms of Use and the
+McDonald's MCP Service Rules — **mainland China only (excluding Hong Kong,
+Macao and Taiwan), personal non-commercial use**. Savings figures come from
+actual official tool responses and constitute no price promise.
+"McDonald's", "麦当劳", "麦乐送", "麦麦" and related marks belong to McDonald's
+Corporation.
+
+## License
+
+This project's code is released under the [MIT](LICENSE) license; running it
+relies on the McDonald's China MCP service and the upstream integration guide
+([M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)) — using
+those services is subject to their terms and upstream restrictions.
 
 ## Star History
 
@@ -606,13 +300,3 @@ If you find this useful, a ⭐ helps more McDonald's regulars discover it:
 [![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/maimai-saver&type=Date)](https://star-history.com/#yuxinlaile/maimai-saver&Date)
 
 </div>
-
-## License
-
-This project's code is released under the [MIT](LICENSE) license.
-
-Note: running this project relies on the McDonald's China MCP service and the
-upstream integration guide ([M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server));
-using those services is additionally subject to McDonald's China Terms of Use,
-the McDonald's MCP Service Rules and the upstream repository's usage
-restrictions (personal, non-commercial use only).

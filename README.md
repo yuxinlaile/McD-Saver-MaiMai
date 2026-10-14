@@ -4,65 +4,7 @@
 
 <img src="docs/assets/banner.svg" alt="麦麦省钱助手 MaiMai Saver" width="720" />
 
-**同一份麦辣三件套，单点 ¥43.5、改点套餐 ¥33.5、找对团购更低——差的这 ¥10，让确定性算法替你算清楚，顺手找回你正在过期的券。**
-
-基于麦当劳中国官方 MCP Server（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server) 集成指南）构建，
-覆盖门店、菜单、点餐、订单、优惠券、积分商城、抽奖、主题活动等 **35 个官方工具**。
-
-<div align="center">
-
-| 🍟 单次点餐实省 | 💸 过期券找回 | 🧮 计价方式 | 🔥 营养约束 | 🎮 免 Token 体验 |
-|:---:|:---:|:---:|:---:|:---:|
-| **¥6 ~ ¥13/单** | **一次几十元** | 官方 calculate-price 逐方案核价 | 预算/热量/蛋白/钠 | [在线试算](https://yuxinlaile.github.io/maimai-saver/demo.html) · [离线 demo](#运行与命令) |
-
-</div>
-
-**核心方法论**：每次下单前自动执行 **领券 → 选券 → 比价 → 积分抵扣评估** 四步省钱检查，
-每一次报价都附带省钱明细（原价 / 优惠 / 实付 / 节省比例）。
-
-**🍟 30 秒体验（无需 Token、不联网）**：
-[在线试算页](https://yuxinlaile.github.io/maimai-saver/demo.html)（免登录，支持一键导入真实菜单）·
-`git clone` 后运行 `python demo.py`（离线全链路演示，输出见下方真实截图）
-
-<div align="center">
-<img src="docs/assets/terminal-demo.svg" alt="python demo.py 真实运行输出——四步检查全链路" width="680" />
-<p><sub>↑ <code>python demo.py</code> 的真实运行输出，未做内容美化，可直接运行复现（demo 即回归测试）</sub></p>
-</div>
-
-## 我们做对了什么别人没做的
-
-同类工具不少，这里把不同点摆在明处：
-
-| 常见做法 | 我们的做法 | 差别 |
-|---|---|---|
-| 只算官方券 | **官方券 + 美团/抖音团购 + 积分**，全渠道同口径估算出「终局建议」 | 别的工具算到官方为止，囤着的团购券没人管 |
-| 鼓励凑单用券 | 凑单以「不凑单」为基准，强制标注提示，警惕**凑单陷阱** | 为用券而多买常常反而更贵 |
-| 券是可用资源 | 券是**有保质期的钱**：用券排程算出「可实现 vs 注定过期」 | 名义 ¥150 的券包，可能只有 ¥60 用得上 |
-| 无面值券靠猜 | 券码 + couponId 传 calculate-price **实测**，失败如实标注 | 模型给不出真实价格，只能猜 |
-| 营养靠口算 | 预算/热量/蛋白/钠**四维约束**，数据缺失按不满足处理并标注 | 健身控卡人群的硬需求，算不出来就说算不出 |
-| 定时轮询抢券 | `claim` 一次性交互确认，**明确不做无人值守** | 自动化在风控侧等同机器人，有封号风险 |
-| 菜单靠手抄 | 在线试算页**一键导入真实菜单**（粘贴 MCP 输出即全量替换） | 官方菜单全量同步的合规路径 |
-
-> **差异化内核：别家在单渠道里找最优，我们把官方 App、美团、抖音、积分商城
-> 四个渠道放在同一张桌子上算终局。**
-
-```mermaid
-flowchart TD
-    U[用户: 想吃X · 预算Y · 热量Z · 蛋白P] --> A[Agent / CLI]
-    A -->|领券前置| M[麦当劳官方 MCP<br/>mcp.mcd.cn]
-    A -->|菜单/券池/营养| M
-    A -->|calculate-price 逐方案核价| M
-    A --> O[optimizer.py<br/>确定性组合优化 + 四维约束]
-    A --> D[deal_compare.py<br/>美团/抖音团购同口径估算]
-    A --> S[silent_cost.py<br/>沉默成本 + 用券排程]
-    O --> R[全渠道终局建议<br/>+ 省钱明细]
-    D --> R
-    S --> R
-    R --> Q{用户确认?}
-    Q -->|是| C[create-order]
-    Q -->|否| R
-```
-
+**同一份套餐，单点 ¥43.5、改点套餐 ¥33.5——让确定性算法替你算清这一单，顺手找回你正在过期的券。**
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
 [![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
@@ -72,7 +14,7 @@ flowchart TD
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
-简体中文 · [English](README_EN.md)
+**[🎮 30 秒在线试算（免登录）](https://yuxinlaile.github.io/maimai-saver/demo.html) · [📦 快速开始](#快速开始) · [💬 讨论区](https://github.com/yuxinlaile/maimai-saver/discussions) · [English](README_EN.md)**
 
 </div>
 
@@ -81,79 +23,188 @@ flowchart TD
 ## 目录
 
 - [项目简介](#项目简介)
-- [免责声明](#免责声明)
-- [核心功能](#核心功能)
-- [工具能力总览](#工具能力总览)
-- [技术栈](#技术栈)
-- [目标用户](#目标用户)
-- [效果预览](#效果预览)
-- [目录结构](#目录结构)
-- [环境要求](#环境要求)
-- [安装步骤](#安装步骤)
-  - [申请 MCP Token](#申请-mcp-token)
-  - [方式一：MCP 客户端直连](#方式一mcp-客户端直连)
-  - [方式二：Agent Skill 安装](#方式二agent-skill-安装)
-  - [方式三：CLI 独立使用](#方式三cli-独立使用)
-  - [方式四：全渠道比价](#方式四全渠道比价)
-- [运行与命令](#运行与命令)
+- [功能特性](#功能特性)
+- [快速开始](#快速开始)
+  - [30 秒体验（免 Token）](#30-秒体验免-token)
+  - [安装步骤](#安装步骤)
+- [使用说明](#使用说明)
+  - [命令速查](#命令速查)
+  - [真实运行输出](#真实运行输出)
+  - [全渠道比价示例](#全渠道比价示例)
 - [配置说明](#配置说明)
+- [工具能力总览](#工具能力总览)
 - [常见问题](#常见问题)
-- [测试方式](#测试方式)
-- [贡献指南](#贡献指南)
-- [Star History](#star-history)
+- [参与贡献](#参与贡献)
+- [免责声明](#免责声明)
 - [许可证](#许可证)
+- [Star History](#star-history)
 
 ## 项目简介
 
-麦麦省钱助手是一个以“省钱”为核心目标的麦当劳点餐 Agent Skill：它不是简单地
-帮你下单，而是在**下单前强制执行省钱检查**——先把可领的券领完、再挑出当前
-订单最优券、用 `calculate-price` 做无券/带券双价对比、最后评估积分兑换是否
-更划算，然后把省钱明细（原价、优惠、实付、节省比例）一并展示给你确认。
+麦麦省钱助手是一个以「省钱」为唯一目标的麦当劳点餐助手：**不是帮你下单，
+而是在下单前强制跑一遍省钱检查**——把可领的券领完、挑出当前订单最优券、
+用官方 `calculate-price` 做无券/带券双价对比、评估积分兑换是否更划算，
+最后把省钱明细（原价 / 优惠 / 实付 / 节省比例）一并展示给你确认。
 
-项目同时提供：
+一个仓库，三种用法：
 
-- **Agent Skill**：一份 `SKILL.md` 遵循开放 Agent Skills 标准，可直接安装到
-  WorkBuddy / Claude Code / Cursor / OpenAI Codex；
-- **独立 CLI**：`scripts/mcd.py` 直连官方 MCP Server，无需任何 MCP 客户端，
-  适合脚本与自动化场景；
-- **全渠道比价引擎**：`scripts/deal_compare.py` 将美团/抖音等平台的麦当劳
-  团购券（手动录入）与官方价格做同口径估算比价，输出“官方 vs 团购”决策建议。
+- **Agent Skill**：一份 `SKILL.md` 遵循开放标准，装进 WorkBuddy / Claude Code / Cursor / Codex 即用；
+- **独立 CLI**：`scripts/mcd.py` 直连官方 MCP Server（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server) 集成指南），无需任何客户端；
+- **在线试算页**：纯前端免登录，支持一键导入真实菜单。
 
-## 免责声明
+**我们做对了什么别人没做的**——同类工具不少，差别摆在明处：
 
-- 本项目为**社区开源项目，与麦当劳公司及其关联方无任何隶属、合作或背书关系**。
-- 使用麦当劳 MCP 服务须遵守麦当劳中国《使用条款》及《麦当劳 MCP 服务规则》，
-  仅限**中国大陆地区（不含港澳台）**、**个人非商业用途**。
-- 本项目不对麦当劳 MCP 服务的可用性、准确性作任何保证，按"现状"提供；
-  省钱明细均来自官方工具的实际返回值，不构成任何价格承诺。
-- "McDonald's"、"麦当劳"、"麦乐送"、"麦麦"等名称与商标权利归属麦当劳公司，
-  本项目不构成对上述商标的任何授权。
+| 常见做法 | 我们的做法 | 差别 |
+|---|---|---|
+| 只算官方券 | **官方券 + 美团/抖音团购 + 积分** 全渠道同口径估算「终局建议」 | 囤在团购 App 里的券也有人管 |
+| 鼓励凑单用券 | 凑单以「不凑单」为基准，**凑单陷阱**主动劝退 | 为用券而多买常常反而更贵 |
+| 券是可用资源 | 券是**有保质期的钱**：用券排程算出「可实现 vs 注定过期」 | 名义 ¥150 的券包，可能只有 ¥60 用得上 |
+| 无面值券靠猜 | 券码 + couponId 传 calculate-price **实测**，失败如实标注 | 模型给不出真实价格，只能猜 |
+| 营养靠口算 | 预算/热量/蛋白/钠**四维约束**，数据缺失按不满足处理并标注 | 健身控卡人群的硬需求 |
+| 定时轮询抢券 | `claim` 一次性交互确认，**明确不做无人值守** | 自动化在风控侧等同机器人 |
+| 菜单靠手抄 | 在线试算页**一键导入真实菜单**（粘贴 MCP 输出即全量替换） | 官方菜单全量同步的合规路径 |
 
-## 核心功能
+> **差异化内核：别家在单渠道里找最优，我们把官方 App、美团、抖音、积分商城
+> 放在同一张桌子上算终局。**
 
-- **省钱导向**：内置“省钱四步检查”与十一大省钱策略——领券前置、门店选券、
-  无券/带券双价对比、积分抵扣评估、套餐零成本替换、活动情报、免费抽奖提醒、
-  团餐满减、答卷奖券回收、卡类价值评估
-- **全渠道比价**：美团/抖音团购券（手动录入，平台无公开 API）与官方渠道价格
-  同口径估算对比，输出决策建议并提示叠加规则与限制条件
-- **零依赖**：核心客户端仅使用 Python 3.9+ 标准库，克隆即用
-- **完整 MCP 生命周期**：`initialize` → `tools/list` → `tools/call`，自动维护
-  `Mcp-Session-Id` 会话，兼容 `application/json` 与 `text/event-stream` 响应
-- **生产级错误处理**：401 快速失败不重试；429 指数退避 + 随机抖动自动重试并
-  尊重 `Retry-After`；5xx/网络错误自动重试；工具层错误结构化（`McpToolError`）
-- **Agent Skill 化**：`SKILL.md` 提供触发词、省钱工作流与调用规范
-  （先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠 / 比价透明）
-- **安全设计**：Token 支持环境变量/文件/参数三通道解析，绝不输出到日志
-- **组合优化**：内置券组合优化器，枚举「无券直点/单券/凑单达标」候选方案，
-  `--mcp` 模式经官方 calculate-price 逐方案真实计价，凑单以「不凑单」为基准并强制标注提示；
-  多维约束支持预算/热量/蛋白质下限/钠上限（v1.5），违规方案排后如实标注
-- **沉默成本体检**：临期券面值合计 + **用券排程**（过期窗口×点单频率→「可实现 vs 注定过期」）
-  + 历史订单消费画像 + 积分临期提醒与影子价格 + **单文件可分享 HTML 报告**（零 CDN），
-  回答「你正在白扔多少钱」
-- **券面值实测**：无面值券经券码+couponId 走官方 calculate-price 实测精确价值——
-  实测优先、估算兜底、失败如实标注
-- **测试保障**：113 个单元测试覆盖 SSE 解析、Token 解析、退避计算、
-  比价折算决策、组合优化与 CLI 退出码
+## 功能特性
+
+**💰 省钱四步检查**（核心方法论，Agent 自动执行）
+
+- 领券前置 → 门店选券 → 无券/带券双价对比 → 积分抵扣评估
+- 每一笔优惠金额必须来自官方工具实际返回值，**绝不虚构**
+
+**🧮 券组合优化器**（`optimizer.py`）
+
+- 确定性枚举「无券直点 / 单券 / 凑单达标 / 改点套餐」候选，逐方案计价排名
+- 四维约束：`--budget` 预算 / `--max-kcal` 热量 / `--min-protein` 蛋白 / `--max-sodium` 钠
+- 违规方案排后并标注差多少，数据缺失如实标注「未知」——**绝不静默过滤**
+
+**📉 全渠道比价引擎**（`deal_compare.py`）
+
+- 美团/抖音团购券手动录入（平台无公开 API，不做爬虫），与官方价格同口径折算对比
+- 输出「官方 vs 团购」终局建议，叠加规则与限制原样提示
+
+**🩺 沉默成本体检**（`silent_cost.py`）
+
+- 临期券扫描 + **用券排程**（过期窗口 × 点单频率 →「可实现 vs 注定过期」）
+- 消费画像（客单价/高频单品）+ 积分影子价格
+- 无面值券 `--probe` 实测精确价值；`--html` 生成可分享单文件报告
+
+**🛡️ 安全与合规设计**
+
+- Token 三通道解析（环境变量/文件/参数），绝不写入日志
+- 401 快速失败、429 指数退避尊重 `Retry-After`、5xx/网络错误自动重试
+- 明确不做：爬虫、自动下单、无人值守定时领券、刷星
+
+**🧪 测试保障**：113 个单元测试覆盖 SSE 解析、Token 解析、退避计算、比价决策、
+组合优化与 CLI 退出码；`demo.py` 全链路输出被 `tests/test_demo_pipeline.py`
+断言——**demo 即回归测试**。
+
+## 快速开始
+
+### 30 秒体验（免 Token）
+
+```bash
+git clone https://github.com/yuxinlaile/maimai-saver.git
+cd maimai-saver
+python demo.py          # 离线全链路：领券→选券→比价→积分→排程→跨渠道
+```
+
+或直接打开[在线试算页](https://yuxinlaile.github.io/maimai-saver/demo.html)（免登录，
+31 项菜单 / 9 张券 / 6 单团购示例，支持粘贴 MCP `query-meals` 输出一键导入真实菜单）。
+
+### 安装步骤
+
+**第 1 步 · 申请 MCP Token**（方式一/二需要；30 秒体验与在线试算不需要）
+
+1. 打开 <https://open.mcd.cn/mcp>，右上角【登录】（手机号验证，限中国大陆）
+2. 【控制台】→【激活】→ 同意服务协议 → 复制 MCP Token
+
+**第 2 步 · 按场景选一种方式**
+
+| 方式 | 适合谁 | 怎么做 |
+|---|---|---|
+| **方式一 · MCP 客户端直连** | 用 WorkBuddy / Cursor / Claude Code 等客户端 | 把 [`config/mcp.example.json`](config/mcp.example.json) 中 `${MCD_MCP_TOKEN}` 换成真实 Token，粘贴到客户端 MCP 设置（位置见[配置说明](#配置说明)）并启用 `mcd-mcp` |
+| **方式二 · Agent Skill 安装** | 想让 Agent 自动触发省钱检查 | `git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver`（Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`），另按方式一配置 MCP 连接；各平台细节见 [agent-skill-installation.md](references/agent-skill-installation.md) |
+| **方式三 · CLI 独立使用** | 脚本与调试，不装任何客户端 | `export MCD_MCP_TOKEN="你的Token"`（或写入 `~/.mcd_mcp_token` 文件），然后 `python scripts/mcd.py check` 验证连通性 |
+
+安装 Skill 后 Agent 会按 `SKILL.md` 自动执行四步检查，并遵守四条规范：
+**先查后改 / 下单必确认 / 省钱必检查 / 不虚构优惠**。
+
+## 使用说明
+
+### 命令速查
+
+| 命令 | 作用 |
+|---|---|
+| `python demo.py` | **30 秒离线全链路演示**（免 Token；`--section 比价` 看单段） |
+| `python scripts/mcd.py check` | 验证 Token 与服务器连通性 |
+| `python scripts/mcd.py tools` | 列出全部 35 个官方工具 |
+| `python scripts/mcd.py schema <tool>` | 查看指定工具的入参 JSON Schema |
+| `python scripts/mcd.py call <tool> --arg k=v` | 调用官方工具（`--raw` 原始输出） |
+| `python scripts/mcd.py claim` | 一键领取可领券（展示清单→确认→领取） |
+| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | 券组合优化；`--budget/--max-kcal/--min-protein/--max-sodium` 四维约束 |
+| `python scripts/deal_compare.py add/list/compare` | 团购券录入与全渠道比价 |
+| `python scripts/silent_cost.py report --coupons c.json --orders o.json --points p.json` | 沉默成本体检；`--probe` 实测券价值 / `--html` 生成分享报告 |
+
+**CLI 退出码**（mcd.py）：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
+（deal_compare.py：`0` 成功 · `1` 用法/数据错误 · `2` 券库为空）
+
+**全局选项**：`--token`、`--url`、`--timeout`（默认 30s）、`--retries`（默认 3）、`--verbose`。
+
+> **claim 的安全边界**：用户主动触发、单次执行、领取前必须 y 确认（`--yes` 仅供
+> 脚本）；**不提供定时轮询与无人值守后台**——这在风控侧等同机器人行为。
+
+### 真实运行输出
+
+<div align="center">
+<img src="docs/assets/terminal-demo.svg" alt="python demo.py 真实运行输出" width="680" />
+<p><sub>↑ <code>python demo.py</code> 实际输出，未做内容美化，可运行复现（demo 即回归测试）</sub></p>
+</div>
+
+### 全渠道比价示例
+
+```bash
+# 录入你在美团查到的团购券
+python scripts/deal_compare.py add \
+    --platform meituan --title "麦当劳满40减14代金券" \
+    --price 25.9 --face 40 --channel store --time limited \
+    --valid-until 2026-11-30 --notes "每日限用1张"
+
+# 与官方渠道（原价 48.5 / 带券实付 38.5）同口径对比
+python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
+```
+
+> 比价结果为本地估算（团购平台无公开 API），方法论见
+> [group-buy-comparison.md](references/group-buy-comparison.md)；数据层预留
+> `MAIMAI_DEALS_PROVIDER` 插件接口。
+
+## 配置说明
+
+**配置文件**
+
+| 文件 | 用途 |
+|---|---|
+| `config/mcp.example.json` | MCP 客户端接入模板（`${MCD_MCP_TOKEN}` 占位符） |
+| `mcp-config.example.json` | 仓库根目录脱敏配置（参赛要求文件） |
+
+**环境变量**
+
+| 变量 | 说明 |
+|---|---|
+| `MCD_MCP_TOKEN` | MCP Token（优先级最高） |
+| `MCD_MCP_TOKEN_FILE` | Token 文件路径，默认 `~/.mcd_mcp_token` |
+| `MCD_MCP_URL` | MCP Server 地址，默认 `https://mcp.mcd.cn` |
+| `MAIMAI_DEALS_FILE` | 团购券库路径，默认 `~/.maimai_saver/deals.json` |
+| `MAIMAI_DEALS_PROVIDER` | 外部数据源模块路径（实现 `load_deals()`），可选 |
+
+**MCP 客户端配置位置**：WorkBuddy `~/.workbuddy/mcp.json` · Cursor 设置 → Tools & MCP ·
+Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/config.toml` 的
+`[mcp_servers.mcd-mcp]` 段。
+
+**Token 安全**：仅通过环境变量、Token 文件或 `--token` 参数提供；绝不写入仓库文件、
+绝不出现在日志中；泄露后立即到 open.mcd.cn/mcp 重新申请。
 
 ## 工具能力总览
 
@@ -169,399 +220,58 @@ flowchart TD
 | 主题活动 | `query-party-city` `query-party-store` `query-partystore-date` `query-partystore-session` `party-order-create` |
 | 辅助 | `now-time-info` `campaign-calendar` |
 
-完整说明与使用要点见 [`references/tools.md`](references/tools.md)。
-
-## 技术栈
-
-| 层面 | 技术 |
-|---|---|
-| 语言/运行时 | Python 3.9+（仅标准库：`urllib` / `json` / `argparse` / `datetime` / `uuid`） |
-| 协议 | MCP Streamable HTTP + JSON-RPC 2.0（SSE 与 JSON 双格式响应） |
-| 测试 | pytest（开发依赖，见 `requirements-dev.txt`） |
-| CI | GitHub Actions（语法检查 + 单元测试，Python 3.9/3.11/3.13 矩阵） |
-| 运行时第三方依赖 | **无** |
-
-## 目标用户
-
-| 用户 | 典型用法 |
-|---|---|
-| 麦当劳高频消费者 | 每次点餐自动完成"领券→选券→比价→积分评估"，长期降低单客成本 |
-| 学生 / 预算敏感人群 | 结合团购券比价与积分兑换，用有限预算吃到更多 |
-| 健身 / 控卡人群 | 结合营养数据做"热量预算内的省钱搭配" |
-| 团购 App 用户 | 把手里囤的麦当劳团购券管起来，与官方券自动比较哪边更划算 |
-| 企业行政 / 团餐组织者 | 团餐场景满减规则与助餐服务组合，降低团体订餐成本 |
-| Agent / 效率工具玩家 | 将本仓库作为 Agent Skill（WorkBuddy / Claude Code 等）直接加载 |
-
-### 还可以这样问
-
-| 你说 | 它会处理什么 |
-|---|---|
-| "40 块以内，想吃汉堡加可乐" | 预算约束内枚举组合，无方案时给出最接近方案与超出金额 |
-| "健身餐，蛋白质至少 20g，钠别太高" | 蛋白下限 + 钠上限约束，违规方案排后并标注差多少 |
-| "我囤的美团 40 减 14 券用哪个划算" | 团购券同口径折算当前购物车，输出官方 vs 团购终局建议 |
-| "我最近白扔了多少钱" | 临期券排程：名义面值 → 可实现 → 注定过期，一次算清 |
-| "有券就比，没有也行" | 有券对比带券方案，没券直接比无券方案，不虚构优惠 |
-
-## 效果预览
-
-在线试算（免登录）：<https://yuxinlaile.github.io/maimai-saver/demo.html>
-
-试算页内置 31 项菜单（7 大类，含早餐段）、9 张券、6 单美团/抖音团购示例与
-跨渠道终局建议，并支持**一键导入真实菜单**——把 MCP `query-meals` 输出原样粘贴
-即可全量替换示例数据，是官方菜单全量同步的正确姿势。
-
-券组合优化（`optimizer.py` 实际输出）：
-
-<div align="center">
-<img src="docs/assets/optimizer-report.svg" alt="券组合优化输出示例" width="720" />
-</div>
-
-全渠道比价报告（`deal_compare.py compare` 实际输出）：
-
-<div align="center">
-<img src="docs/assets/compare-report.svg" alt="全渠道比价报告输出示例" width="720" />
-</div>
-
-<details>
-<summary>查看文本版报告（节选）</summary>
-
-```text
-========================================================================
-麦麦省钱助手 · 全渠道比价报告（生成日期: 2026-10-10）
-========================================================================
-官方渠道方案：商品合计原价 ¥48.50，MCP 带券最优实付 ¥38.50（折扣率 79.4%）
-
-团购券比价（按估算到手价升序，所有金额均为估算值）：
-------------------------------------------------------------------------
-  [81bb4c] meituan | 麦当劳满40减14代金券
-      售价 ¥25.90 / 面值 ¥40.00 = 折扣率 64.8% | 同内容估算到手 ¥31.40 | 对比官方 +7.10 元
-      限制: 仅堂食核销；限时段使用；2026-11-30前有效；每日限用1张
-
-推荐决策（估算，实际以各平台页面与麦当劳官方渠道为准）：
-  ✔ 建议使用团购券：麦当劳满40减14代金券（meituan）
-    估算到手 ¥31.40，较官方渠道方案节省约 ¥7.10。
-    注意：团购券通常不可叠加麦当劳官方优惠券，且需在适用门店/时段内核销；
-    若本次订单内容未被该券覆盖，估算不成立，请以券详情页为准。
-```
-
-</details>
-
-## 目录结构
-
-```
-maimai-saver/
-├── SKILL.md                            # Agent Skill 入口：省钱方法论与调用规范
-├── README.md / README_EN.md            # 项目说明（中/英）
-├── CHANGELOG.md                        # 版本变更记录
-├── CONTRIBUTING.md                     # 贡献指南（参与方式/PR 流程/合规红线）
-├── LICENSE                             # MIT + 第三方条款声明
-├── CONTEST_DECLARATION.md              # 参赛声明（官方原文，未改动）
-├── MCP_INTEGRATION.md                  # MCP 集成说明：Server/Tool/调用流程/业务价值
-├── mcp-config.example.json             # 脱敏 MCP 配置（仅环境变量占位符）
-├── workbuddy.md                        # WorkBuddy 对话上下文（参赛专项奖励核验）
-├── requirements-dev.txt                # 开发/测试依赖（pytest）
-├── pyproject.toml                      # 包元数据与 pytest 配置（pip install . 可用）
-├── demo.py                             # 30 秒离线全链路演示（零 Token，demo 即回归测试）
-├── fixtures/                           # 与真实 MCP 响应同格式的演示数据快照
-├── config/
-│   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
-├── install.ps1                         # Windows 一键安装脚本（备份旧版，不碰 Token）
-├── scripts/
-│   ├── mcd_client.py                   # MCP Streamable HTTP 客户端核心（纯标准库）
-│   ├── mcd.py                          # CLI 入口：check / tools / schema / call / claim
-│   ├── deal_compare.py                 # 全渠道比价引擎（美团/抖音券手动录入）
-│   ├── optimizer.py                    # 券组合优化器（估算/--mcp 真实计价双模式）
-│   └── silent_cost.py                  # 沉默成本体检（临期券/消费画像/积分）
-├── references/
-│   ├── tools.md                        # 35 个工具完整目录
-│   ├── money-saving-strategies.md      # 十一大省钱策略详解（核心参考）
-│   ├── agent-skill-installation.md     # WorkBuddy/Claude Code/Cursor/Codex 安装指南
-│   ├── group-buy-comparison.md         # 外部团购比价方法论
-│   ├── workflows.md                    # 业务工作流详解（含省钱检查前置流程）
-│   └── error-handling.md               # 错误码、重试策略与排查指南
-├── examples/
-│   └── order-flow-example.md           # 完整省钱点餐示例会话
-├── docs/
-│   ├── demo.html                       # GitHub Pages 在线试算器（免登录）
-│   └── assets/                         # README 预览图（SVG）
-├── tests/                              # pytest 单元测试（113 个用例）
-└── .github/                            # CI + Issue/PR 模板
-```
-
-## 环境要求
-
-| 项目 | 要求 |
-|---|---|
-| Python | 3.9 或更高版本（仅标准库即可运行） |
-| MCP Token | 在 [open.mcd.cn/mcp](https://open.mcd.cn/mcp) 免费申请（中国大陆手机号验证） |
-| 网络 | 可访问 `https://mcp.mcd.cn`（麦当劳 MCP 服务，限中国大陆） |
-| MCP 客户端 | 可选（WorkBuddy / Cursor / Claude Code / Codex 等，仅方式一、二需要） |
-| 限流 | 每个 Token 每分钟最多 600 次请求 |
-
-## 安装步骤
-
-四种方式按需选择：方式一/二面向 Agent 对话场景，方式三适合脚本与自动化调试，
-方式四为可选的省钱增强。所有方式都依赖下方申请的 MCP Token。
-
-### 申请 MCP Token
-
-1. 打开 <https://open.mcd.cn/mcp>，右上角【登录】（手机号验证）
-2. 【控制台】→【激活】→ 同意服务协议 → 复制 MCP Token
-
-### 方式一：MCP 客户端直连
-
-将 [`config/mcp.example.json`](config/mcp.example.json) 中的 `${MCD_MCP_TOKEN}`
-替换为实际 Token，粘贴到 MCP 客户端并启用 `mcd-mcp` 服务；各客户端的配置
-位置见[配置说明](#配置说明)。接入后客户端自动暴露全部 35 个工具。
-
-### 方式二：Agent Skill 安装
-
-本技能遵循开放的 Agent Skills 标准（SKILL.md），同一仓库可直接安装到
-WorkBuddy、Claude Code、Cursor、OpenAI Codex：
-
-| 平台 | 项目级 | 用户级 | 显式调用 |
-|---|---|---|---|
-| WorkBuddy | `.workbuddy/skills/` | `~/.workbuddy/skills/` | 需求自动触发 |
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` | `/maimai-saver` |
-| Cursor | `.cursor/skills/`、`.agents/skills/` | `~/.cursor/skills/`、`~/.agents/skills/` | `/maimai-saver` |
-| OpenAI Codex | `.agents/skills/` | `~/.agents/skills/` | `$maimai-saver`、`/skills` |
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver
-# Cursor: ~/.cursor/skills/ · Codex: ~/.agents/skills/ · WorkBuddy: ~/.workbuddy/skills/
-```
-
-安装技能后仍需按[方式一](#方式一mcp-客户端直连)配置 `mcd-mcp` MCP 连接，
-技能才能调用真实工具。各平台详细步骤见
-[`references/agent-skill-installation.md`](references/agent-skill-installation.md)。
-
-安装完成后 Agent 将依据 `SKILL.md` 的触发词与工作流自动调用，并遵守四条规范：
-
-1. **先查后改**：所有写操作前必须先完成查询，上下文齐备。
-2. **下单必确认**：任何下单/取消/兑换/抽奖操作前，必须向用户展示关键信息并获得
-   明确确认；支付链接仅原样转交，由用户自行支付。
-3. **省钱必检查**：下单前执行"领券→选券→比价→积分抵扣评估"四步检查，报价附带省钱明细。
-4. **不虚构优惠**：每一笔优惠金额必须来自 `calculate-price` 等工具的实际返回值。
-
-### 方式三：CLI 独立使用
-
-```bash
-git clone https://github.com/yuxinlaile/maimai-saver.git
-cd maimai-saver
-
-# 提供 Token（三选一）
-export MCD_MCP_TOKEN="你的Token"          # 环境变量（推荐）
-echo "你的Token" > ~/.mcd_mcp_token        # 或 Token 文件
-# 或每次调用时 --token "你的Token"
-
-python scripts/mcd.py check                # 验证 Token 与连通性
-```
-
-### 方式四：全渠道比价
-
-```bash
-# 把你在美团/抖音查到的麦当劳团购券录入本地券库
-python scripts/deal_compare.py add \
-    --platform meituan --title "麦当劳满40减14代金券" \
-    --price 25.9 --face 40 --channel store --time limited \
-    --valid-until 2026-11-30 --notes "每日限用1张"
-
-# 与官方渠道（MCP 计算价格：原价 48.5 / 带券实付 38.5）比价
-python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
-```
-
-> 比价结果为本地估算（团购平台无公开 API，数据手动录入），方法论见
-> [`references/group-buy-comparison.md`](references/group-buy-comparison.md)；
-> 数据层支持 `MAIMAI_DEALS_PROVIDER` 环境变量接入外部数据源，为未来官方
-> API 预留自动化接入点。
-
-## 运行与命令
-
-### mcd.py（官方 MCP 工具调用）
-
-```bash
-python scripts/mcd.py check                  # 检查 Token 有效性与服务器连通性
-python scripts/mcd.py tools                  # 列出全部 35 个工具
-python scripts/mcd.py schema query-meals     # 查看指定工具的入参 JSON Schema
-python scripts/mcd.py call query-nearby-stores --arg address="北京市朝阳区xx路"   # 键值对传参
-python scripts/mcd.py call query-meals --args '{"storeCode": "..."}' --raw      # 整体 JSON + 原始输出
-python scripts/mcd.py claim                # 一键领取麦麦省可领券（展示清单→确认→领取）
-```
-
-**CLI 退出码**：`0` 成功 · `1` 工具错误 · `2` 鉴权失败 · `3` 限流 · `4` 网络错误
-
-全局选项：`--token`、`--url`、`--timeout`（默认 30s）、`--retries`（默认 3）、
-`--verbose`，子命令前后均可使用。
-
-> **claim 的安全边界**：用户主动触发、单次执行，领取前必须展示清单并按 y 确认
-> （`--yes` 仅供脚本场景跳过交互）；**不提供定时轮询与无人值守后台**——
-> 这类自动化在风控侧等同于机器人行为，有 Token 封禁风险，本项目明确不做。
-
-### deal_compare.py（全渠道比价）
-
-```bash
-python scripts/deal_compare.py add ...       # 录入团购券
-python scripts/deal_compare.py list          # 列出券库（含有效期检查）
-python scripts/deal_compare.py compare --mcd-face 48.5 --mcd-price 38.5
-```
-
-退出码：`0` 成功 · `1` 用法/数据错误 · `2` 券库为空。
-
-### optimizer.py（券组合优化）
-
-```bash
-# 估算模式（本地计价，输出标注「未经验证」）
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json
-# 真实计价模式（官方 calculate-price 逐方案核价，可作下单依据；需 --store-code）
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --mcp --store-code ST00123
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --budget 30 --max-kcal 800   # 可选：预算/热量约束，超支方案排后并标注
-python scripts/optimizer.py plan --wants wants.json --menu menu.json --coupons coupons.json \
-    --min-protein 20 --max-sodium 1500   # 可选：蛋白质下限/钠上限（v1.5，菜单含 protein/sodium 字段时生效）
-python scripts/optimizer.py demo        # 离线演示
-```
-
-菜单条目可选 `kcal`（热量，来自 list-nutrition-foods）与 `contains`（套餐覆盖的单品
-编码，用于生成"改点套餐"候选）；v1.5 起支持 `protein`（g）/`sodium`（mg）字段，
-配合 `--min-protein` / `--max-sodium` 做营养约束——数据缺失的方案按不满足处理并
-如实标注，绝不虚构达标。数据文件格式与各字段获取方式见脚本 docstring
-与 SKILL.md 工作流 5。
-
-### silent_cost.py（沉默成本体检）
-
-```bash
-python scripts/mcd.py call query-my-coupons --raw > coupons.json
-python scripts/mcd.py call order-list --raw > orders.json
-python scripts/mcd.py call query-my-account --raw > points.json
-python scripts/silent_cost.py report --coupons coupons.json --orders orders.json --points points.json
-python scripts/silent_cost.py report --coupons coupons.json --probe --store-code ST00123   # 无面值券实测精确价值
-python scripts/silent_cost.py report --coupons coupons.json --html report.html             # 生成可分享单文件 HTML
-python scripts/silent_cost.py demo      # 离线演示（--html 同样可用）
-```
-
-`--probe`：无面值字段/标题无金额的券，把券商品码与 couponId 传给官方
-calculate-price 实测精确价值——实测优先、估算兜底，失败如实标注。
-`--html`：零依赖单文件报告，双击打开即可截图分享（无外部资源、无脚本）。
-
-### demo.py（30 秒离线全链路，v1.6）
-
-```bash
-python demo.py                      # 四步检查全链路：领券→选券→比价→积分→排程→跨渠道
-python demo.py --section 比价        # 只看某一段
-```
-
-读取 `fixtures/` 下与真实 MCP 响应同格式的数据快照；输出由
-`tests/test_demo_pipeline.py` 断言——**demo 即回归测试**。
-
-## 配置说明
-
-### 配置文件
-
-| 文件 | 用途 |
-|---|---|
-| `config/mcp.example.json` | MCP 客户端接入模板（`${MCD_MCP_TOKEN}` 环境变量占位符） |
-| `mcp-config.example.json` | 仓库根目录脱敏配置（参赛要求文件，仅环境变量占位符） |
-
-### 环境变量
-
-| 变量 | 说明 |
-|---|---|
-| `MCD_MCP_TOKEN` | MCP Token（优先级最高的提供方式） |
-| `MCD_MCP_TOKEN_FILE` | Token 文件路径，默认 `~/.mcd_mcp_token` |
-| `MCD_MCP_URL` | MCP Server 地址，默认 `https://mcp.mcd.cn` |
-| `MAIMAI_DEALS_FILE` | 团购券库路径，默认 `~/.maimai_saver/deals.json` |
-| `MAIMAI_DEALS_PROVIDER` | 外部数据源模块路径（实现 `load_deals()`），可选 |
-
-### MCP 客户端配置位置
-
-| 客户端 | 配置位置 |
-|---|---|
-| WorkBuddy | `~/.workbuddy/mcp.json`（或连接器管理页手动配置） |
-| Cursor | 设置 → Tools & MCP → mcp.json |
-| Cherry Studio / Trae / VSCode / Kiro | 各自 MCP 设置页（JSON 导入） |
-| OpenAI Codex | `~/.codex/config.toml` 的 `[mcp_servers.mcd-mcp]` 段 |
-
-### Token 安全要点
-
-Token 仅通过环境变量、Token 文件或 `--token` 参数提供；绝不写入仓库文件、
-绝不出现在日志与异常信息中；如不慎泄露，立即到 open.mcd.cn/mcp 重新申请。
+完整说明见 [`references/tools.md`](references/tools.md)；工作流详解见
+[`references/workflows.md`](references/workflows.md) 与 [`SKILL.md`](SKILL.md)。
 
 ## 常见问题
 
-**Q1：调用报 401 鉴权失败？**
-Token 无效、过期或未提供。检查 `MCD_MCP_TOKEN` / Token 文件 / `--token` 是否
-正确，必要时到 <https://open.mcd.cn/mcp> 控制台重新申请。401 不会自动重试。
+**Q1：401 鉴权失败？** Token 无效/过期/未提供。401 不重试，检查三个通道后到
+[open.mcd.cn/mcp](https://open.mcd.cn/mcp) 重新申请。
 
-**Q2：频繁触发 429 限流？**
-每个 Token 每分钟最多 600 次请求。CLI 已内置指数退避自动重试（尊重
-Retry-After）；仍失败请降低调用频率，检查是否存在对 `query-meal-detail` 等
-工具的循环逐个调用。
+**Q2：429 限流？** 每 Token 每分钟 600 次。CLI 已内置指数退避（尊重 Retry-After）；
+仍失败请降低频率，检查是否在循环逐个调用 `query-meal-detail`。
 
-**Q3：`tools` 列表为空？**
-先用 `python scripts/mcd.py check` 验证 Token 与连通性；确认 `--url` /
-`MCD_MCP_URL` 未被改错。
+**Q3：`tools` 列表为空？** 先 `check` 验证连通性；确认 `--url` / `MCD_MCP_URL` 未改错。
 
-**Q4：工具调用报参数错误（McpToolError）？**
-不要猜参数名：执行 `python scripts/mcd.py schema <tool>` 查看权威入参；
-编码类参数（storeCode、餐品编码、couponId 等）必须原样透传前序工具的返回值。
+**Q4：工具报参数错误？** 不要猜参数名：`python scripts/mcd.py schema <tool>` 查权威入参；
+编码类参数（storeCode、餐品编码、couponId）必须原样透传前序工具返回值。
 
-**Q5：网络错误或“无法解析的响应体”？**
-网络错误会自动重试（默认 3 次）；持续出现请检查本地网络与代理，并按
-[`references/error-handling.md`](references/error-handling.md) 的清单提 Issue
-（请勿附 Token）。
+**Q5：optimizer 估算模式和 `--mcp` 有什么区别？** 估算模式本地计算、标注「未经验证」，
+仅用于快速比较；`--mcp` 模式逐方案走官方 calculate-price（含配送费与叠加规则），
+结果才能作为下单依据。
 
-**Q6：团购比价的数据从哪里来？**
-美团/抖音无面向第三方的公开 API，券信息由你手动录入本地券库；比价结果为
-估算值，实际以各平台页面为准。外部数据源可通过 `MAIMAI_DEALS_PROVIDER` 接入。
+**Q6：比价数据从哪来？** 美团/抖音无公开 API，券信息手动录入本地券库，结果为估算；
+外部数据源可经 `MAIMAI_DEALS_PROVIDER` 接入。
 
-**Q7：支持哪些 Agent？**
-WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md，无需修改），
-安装目录见[方式二](#方式二agent-skill-安装)。
+**Q7：支持哪些 Agent？** WorkBuddy、Claude Code、Cursor、OpenAI Codex（同一 SKILL.md）。
 
-**Q8：如何确认技能安装成功？**
-新开 Agent 会话输入显式调用命令（如 `/maimai-saver`）确认技能被识别；再执行
-`python scripts/mcd.py check` 验证 MCP 连通性。
+**Q8：麦当劳 MCP 的使用限制？** 限中国大陆（不含港澳台）、个人非商业用途，
+详见下方免责声明。
 
-**Q9：optimizer 的估算模式和 --mcp 真实计价模式有什么区别？**
-估算模式用菜单价格与券 threshold/discount 字段本地计算，输出标注「未经验证」，仅用于
-快速比较；--mcp 模式调用官方 calculate-price 逐方案核价（含配送费与全部叠加规则），
-结果才能作为下单依据。下单前仍须按 SKILL.md 规范用 calculate-price 复核并向你确认。
+更多排查见 [`references/error-handling.md`](references/error-handling.md)（提 Issue 请勿附 Token）。
 
-**Q10：麦当劳 MCP 的使用限制？**
-仅限中国大陆地区（不含港澳台）、个人非商业用途；须遵守麦当劳中国《使用条款》
-与《麦当劳 MCP 服务规则》，详见[免责声明](#免责声明)。
+## 参与贡献
 
-## 测试方式
+欢迎 Issue / PR / Discussions：工作流文档、中英校对、工具目录更新（以 `tools`
+子命令实时结果为准）。完整流程见 [CONTRIBUTING.md](CONTRIBUTING.md)；
+真实运行留档见 [examples/verified-run.md](examples/verified-run.md)。
 
-```bash
-# 语法检查（与 CI 一致）
-python -m py_compile scripts/mcd_client.py scripts/mcd.py scripts/deal_compare.py scripts/optimizer.py scripts/silent_cost.py demo.py
+提交前确认：pytest 全过 · 无 Token 等敏感信息 · `references/` 与 `SKILL.md` 同步 ·
+CHANGELOG 补充 · **README 中英同步**。
 
-# 安装开发依赖并运行单元测试（113 个用例，不发起网络请求）
-pip install -r requirements-dev.txt
-python -m pytest tests/ -v
-```
+## 免责声明
 
-CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检查与单元测试
-（Python 3.9 / 3.11 / 3.13 矩阵）。
+本项目为**社区开源项目，与麦当劳公司及其关联方无任何隶属、合作或背书关系**。
+使用麦当劳 MCP 服务须遵守麦当劳中国《使用条款》及《麦当劳 MCP 服务规则》，
+仅限**中国大陆地区（不含港澳台）**、**个人非商业用途**；省钱明细来自官方工具
+实际返回值，不构成价格承诺。"McDonald's"、"麦当劳"、"麦乐送"、"麦麦"等商标
+权利归属麦当劳公司。
 
-## 贡献指南
+## 许可证
 
-欢迎通过 Issue / PR 参与：工作流文档、中英文档校对、工具目录更新
-（麦当劳 MCP 版本迭代较快，以 `tools` 子命令的实时结果为准）。
-完整流程与规范见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
-
-- Issue 模板：Bug 报告、功能建议（`.github/ISSUE_TEMPLATE/`）
-- PR 模板：`.github/PULL_REQUEST_TEMPLATE.md`（含自检清单）
-- 使用咨询 / 比价数据分享：[Discussions](https://github.com/yuxinlaile/maimai-saver/discussions)（已开启）
-
-提交前请确认：
-
-1. `python -m pytest tests/` 全部通过；
-2. 未包含任何真实 Token、密码或个人凭证；
-3. 涉及工具目录/工作流的变更已同步更新 `references/` 与 `SKILL.md`；
-4. 用户可见变更已在 `CHANGELOG.md` 补充说明。
+本项目代码以 [MIT](LICENSE) 许可证发布；运行依赖麦当劳中国 MCP 服务及上游
+集成指南仓库（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)），
+相关使用须遵守其服务条款与上游限制。
 
 ## Star History
 
@@ -572,12 +282,3 @@ CI（`.github/workflows/ci.yml`）在每次 push / PR 时自动执行语法检�
 [![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/maimai-saver&type=Date)](https://star-history.com/#yuxinlaile/maimai-saver&Date)
 
 </div>
-
-## 许可证
-
-本项目代码以 [MIT](LICENSE) 许可证发布。
-
-注意：本项目的运行依赖麦当劳中国 MCP 服务及其上游集成指南仓库
-（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)），
-相关服务的使用须另行遵守麦当劳中国的《使用条款》《麦当劳 MCP 服务规则》
-及上游仓库的使用限制（个人非商业用途等）。
