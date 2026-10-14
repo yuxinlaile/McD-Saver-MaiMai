@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🍟 MaiMai Saver (麦麦省钱助手)
+# 🍟 McD Saver · MaiMai (麦麦省钱助手)
 
-<img src="docs/assets/banner.svg" alt="MaiMai Saver" width="720" />
+<img src="docs/assets/banner.svg" alt="McD Saver · MaiMai Saver" width="720" />
 
 **Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8E%AE_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/maimai-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.6.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.6.0)
+[![Release](https://img.shields.io/badge/Release-v1.7.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/maimai-saver/releases/tag/v1.7.0)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-113%20passed-brightgreen)
@@ -33,6 +33,7 @@
 - [Configuration](#configuration)
 - [Tool coverage](#tool-coverage)
 - [FAQ](#faq)
+- [Release notes](#release-notes)
 - [Contributing](#contributing)
 - [Disclaimer](#disclaimer)
 - [License](#license)
@@ -40,7 +41,7 @@
 
 ## Project overview
 
-MaiMai Saver is a McDonald's ordering assistant with one goal — saving money.
+McD Saver (package name `maimai-saver`) is a McDonald's China ordering assistant with one goal — saving money.
 **It does not order for you; it enforces a savings check before every order**:
 claim all claimable coupons, pick the best coupon for your cart, run a
 dual-price comparison via the official `calculate-price`, evaluate points
@@ -133,7 +134,7 @@ online calculator don't need one)
 | Option | Best for | How |
 |---|---|---|
 | **Option 1 · MCP client** | WorkBuddy / Cursor / Claude Code users | Replace `${MCD_MCP_TOKEN}` in [`config/mcp.example.json`](config/mcp.example.json) with your token, paste into your client's MCP settings (locations under [Configuration](#configuration)), enable `mcd-mcp` |
-| **Option 2 · Agent Skill** | Agent-triggered savings checks | `git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver` (Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`), plus the MCP connection from option 1; per-platform details in [agent-skill-installation.md](references/agent-skill-installation.md) |
+| **Option 2 · Agent Skill** | Agent-triggered savings checks | `git clone https://github.com/yuxinlaile/maimai-saver.git ~/.claude/skills/maimai-saver` (Cursor: `~/.cursor/skills/` · Codex: `~/.agents/skills/` · WorkBuddy: `~/.workbuddy/skills/`, or run the bundled `install.ps1` on Windows), plus the MCP connection from option 1; per-platform details in [agent-skill-installation.md](references/agent-skill-installation.md) |
 | **Option 3 · Standalone CLI** | Scripts and debugging, no client | `export MCD_MCP_TOKEN="your-token"` (or write it to `~/.mcd_mcp_token`), then `python scripts/mcd.py check` |
 
 Once installed, the agent follows `SKILL.md` and obeys four conduct rules:
@@ -267,6 +268,20 @@ Taiwan), personal non-commercial use — see the disclaimer below.
 
 More troubleshooting: [`references/error-handling.md`](references/error-handling.md)
 (no tokens in issues, please).
+
+## Release notes
+
+Current version **v1.7.0**. Recent highlights:
+
+| Version | Highlights |
+|---|---|
+| **v1.7.0** | Swap suggestions ordered by kcal cost · taste memory · MCP pitfalls guide · capability status disclosure |
+| v1.6.0 | Coupon scheduling (realizable vs doomed) · coupon-value probing · shareable HTML report · offline full-pipeline demo |
+| v1.5.0 | Nutrition constraints: protein floor / sodium cap, violators flagged honestly |
+| v1.4.x | Multi-dimension constraints + set-meal swap + points shadow price + one-shot claiming |
+
+Full history in [CHANGELOG.md](CHANGELOG.md); downloads on the
+[Releases](https://github.com/yuxinlaile/maimai-saver/releases) page.
 
 ## Contributing
 
