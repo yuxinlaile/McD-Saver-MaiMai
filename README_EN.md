@@ -2,7 +2,7 @@
 
 # 🍟 McD Saver · MaiMai (麦麦省钱助手)
 
-<img src="docs/assets/banner.svg" alt="McD Saver · MaiMai Saver" width="720" />
+<img src="docs/assets/banner.svg" alt="McD Saver · MaiMai" width="720" />
 
 **Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
