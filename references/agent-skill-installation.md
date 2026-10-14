@@ -24,7 +24,7 @@ Agent 中直接安装使用，无需修改任何文件。
 
 ```bash
 # 在你的项目仓库根目录执行
-git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git /tmp/maimai-saver
+git clone https://github.com/yuxinlaile/McD-saver.git /tmp/maimai-saver
 
 # Claude Code
 mkdir -p .claude/skills && cp -R /tmp/maimai-saver .claude/skills/maimai-saver
@@ -54,7 +54,7 @@ WorkBuddy 是麦当劳程序员创意开发大赛的官方合作伙伴，提交 
 ## Claude Code
 
 ```bash
-git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git ~/.claude/skills/maimai-saver
+git clone https://github.com/yuxinlaile/McD-saver.git ~/.claude/skills/maimai-saver
 ```
 
 - 新开会话后，技能按 frontmatter `description` 自动触发；
@@ -65,7 +65,7 @@ git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git ~/.claude/skills/ma
 ## Cursor
 
 ```bash
-git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git .cursor/skills/maimai-saver
+git clone https://github.com/yuxinlaile/McD-saver.git .cursor/skills/maimai-saver
 # 团队共享可选 .agents/skills/（开放标准目录）；全局安装用 ~/.cursor/skills/
 ```
 
@@ -76,7 +76,7 @@ git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git .cursor/skills/maim
 ## OpenAI Codex
 
 ```bash
-git clone https://github.com/yuxinlaile/McD-Saver-MaiMai.git .agents/skills/maimai-saver
+git clone https://github.com/yuxinlaile/McD-saver.git .agents/skills/maimai-saver
 # 全局安装用 ~/.agents/skills/maimai-saver
 ```
 
