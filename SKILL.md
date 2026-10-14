@@ -259,7 +259,7 @@ maimai-saver/
 ├── CONTEST_DECLARATION.md              # 参赛声明（官方原文，未改动）
 ├── MCP_INTEGRATION.md                  # MCP 集成说明（参赛要求文件）
 ├── mcp-config.example.json             # 脱敏 MCP 配置（仅环境变量占位符）
-├── workbuddy.md                        # WorkBuddy 对话上下文（参赛专项奖励）
+├── docs/development-log.md             # 开发过程记录（WorkBuddy 专项奖励核验用）
 ├── config/
 │   └── mcp.example.json                # MCP 客户端配置示例（占位符 Token）
 ├── scripts/

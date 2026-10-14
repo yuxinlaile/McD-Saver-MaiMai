@@ -57,20 +57,20 @@ One repo, three ways to use it:
   no client required;
 - **Online calculator**: pure front-end, no sign-in, one-click real-menu import.
 
-**What we did differently** — similar tools exist; here is exactly how ours differs:
+**Design principles** — deliberate departures from common practice among similar tools:
 
-| Common approach | Our approach | Why it matters |
+| Common approach | This project's approach | Why it matters |
 |---|---|---|
-| Official coupons only | **Official + Meituan/Douyin group-buys + points mall**, same-basis cross-channel final call | Vouchers sitting in your group-buy apps deserve a seat at the table |
-| Encourage add-ons to reach thresholds | Baseline is "no add-on"; **add-on traps flagged and discouraged** | Buying more just to use a coupon is often more expensive |
+| Official coupons only | **Official + Meituan/Douyin group-buys + points mall**, same-basis cross-channel final call | Vouchers sitting in your group-buy apps are part of the decision |
+| Encourage add-ons to reach thresholds | Baseline is "no add-on"; **add-on traps flagged proactively** | Buying more just to use a coupon is often more expensive |
 | Coupons are resources | Coupons are **perishable money**: scheduling computes realizable vs doomed value | A ¥150 coupon pack may only be worth ¥60 in practice |
 | Guess faceless coupon values | Probe via calculate-price with the coupon's product code + couponId; **fail honestly** | Models can't produce real prices — they guess |
 | Manual nutrition math | **4-dimension constraints**: budget / kcal / protein floor / sodium cap; missing data flagged as non-compliant | Hard requirement for fitness-conscious users |
-| Cron-style auto-claiming | `claim` is a one-shot interactive confirmation; **no unattended automation** | Scheduled automation looks like bot traffic and risks token bans |
+| Cron-style auto-claiming | `claim` is a one-shot interactive confirmation; **no automation or scheduling** | Lower risk of platform rate-limiting and account bans |
 | Re-type the menu | Online calculator with **one-click real-menu import** (paste MCP output) | The compliant path to full official-menu sync |
 
-> **Core differentiator: others optimize inside one channel; we put the official
-> app, Meituan, Douyin and the points mall on the same table and compute the endgame.**
+> **Design core: put the official app, Meituan, Douyin and the points mall on the
+> same table and compute the endgame — instead of optimizing within a single channel.**
 
 ## Features
 
@@ -100,7 +100,7 @@ One repo, three ways to use it:
 
 - Token resolved from env var / file / CLI arg, never logged
 - 401 fails fast; 429 exponential backoff honoring `Retry-After`; 5xx/network auto-retry
-- Explicitly not doing: scraping, auto-ordering, unattended claiming, star manipulation
+- Scope boundary: focused on pre-order savings decisions — no scraping, auto-ordering or unattended scheduling capabilities
 
 **🧪 Tested**: 113 unit tests covering SSE parsing, token resolution, backoff math,
 comparison decisions, combination optimization and CLI exit codes; the full
@@ -163,8 +163,8 @@ never fabricate discounts**.
 **Global options**: `--token`, `--url`, `--timeout` (default 30s), `--retries` (default 3), `--verbose`.
 
 > **`claim` safety boundary**: user-initiated, single-shot, always confirms with `y`
-> (`--yes` for scripting); **no cron jobs, no unattended background mode** — that
-> looks like bot traffic and risks token bans.
+> (`--yes` for scripting); no cron jobs or unattended background mode, in line with
+> platform risk-control requirements.
 
 ### Real output
 

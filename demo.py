@@ -59,7 +59,7 @@ def _load(name: str) -> Any:
 
 def section_claim(available: Dict[str, Any], menu: Dict[str, Any]) -> List[str]:
     codes = {i["mealCode"] for i in menu.get("items", [])}
-    lines = ["【领券前置】可领取的券（免费，不领白不领）"]
+    lines = ["【领券前置】可领取的券（免费领取，零成本）"]
     records = available.get("data", [])
     lines.append("  共 {0} 张可领：".format(len(records)))
     for c in records:
