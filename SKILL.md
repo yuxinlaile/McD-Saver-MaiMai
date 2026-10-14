@@ -5,7 +5,7 @@ version: 1.7.0
 license: MIT
 ---
 
-# 麦麦省钱助手（MaiMai Saver）
+# 麦麦省钱助手（McD Saver）
 
 本技能通过麦当劳中国官方远程托管的 MCP Server（`https://mcp.mcd.cn`，
 Streamable HTTP 协议）为用户提供**以省钱为核心目标**的点餐、优惠、积分服务。
