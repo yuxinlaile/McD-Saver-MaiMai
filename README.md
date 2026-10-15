@@ -67,6 +67,9 @@
 > **设计内核：把官方 App、美团、抖音、积分商城四个渠道放在同一张桌子上
 > 算终局，而不是只在单一渠道内找局部最优。**
 
+**订单安全**：用户明确确认前绝不创建订单；创建订单 ≠ 支付成功，
+支付始终在麦当劳官方页面完成。
+
 ## 功能特性
 
 **💰 省钱四步检查**（核心方法论，Agent 自动执行）
@@ -219,17 +222,6 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 接入实战踩坑（响应格式/单位/多态字段/时效性）见
 [`references/mcp-pitfalls.md`](references/mcp-pitfalls.md)。
 
-## 能力现状
-
-| 状态 | 项 |
-|---|---|
-| ✅ 已验证 | 35 工具连通与全生命周期 · 四步检查全链路（fixtures 回归 113 测试）· calculate-price 双价对比 · claim 交互确认流 |
-| 🔜 待真实环境复核 | `--probe` 券面值实测（代码与测试就绪，待真实 Token 运行留档至 [verified-run](examples/verified-run.md)） |
-| ⚠️ 已知限制 | 团购比价为同口径估算（平台无公开 API）· 营养约束依赖菜单 nutrition 字段完整性 · 仅中国大陆 · 单用户非商业用途 |
-
-**订单安全**：用户明确确认前绝不创建订单；创建订单 ≠ 支付成功，
-支付始终在麦当劳官方页面完成。
-
 ## 常见问题
 
 **Q1：401 鉴权失败？** Token 无效/过期/未提供。401 不重试，检查三个通道后到
@@ -259,22 +251,23 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 
 ## 更新说明
 
-当前版本 **v1.7.0**。近期版本要点：
+当前版本 **v2.0.3**。近期版本要点：
 
 | 版本 | 亮点 |
 |---|---|
 | **v2.0.3** | optimizer 自动衔接团购终局建议（官方 vs 团购一次算清）|
-| **v2.0.2** | 移动端文案适配 + 悬浮计算按钮（结果可达性）|
-| **v2.0.1** | 试算页移动端导入路径（Agent 粘贴 / menu.json 文件）|
-| **v2.0.0** | 版本号自动递增工具（自定义 z.x.y 格式：y≤3、x≤6）|
-| **v1.7.4** | 试算页移动端优化（触控 44px / iOS 输入缩放规避 / 结果置顶）|
-| **v1.7.3** | 试算页 Token 快速导入卡片置顶 · 团购示例扩充 11 条 |
-| **v1.7.2** | 用券排程升级净价值模型（修正高估）· 客单价口径修正 |
-| **v1.7.1** | 省钱等级（S/A/B/C/D）· 参数自动串联技巧 |
-| **v1.7.0** | 点餐替换建议（热量代价从小到大）· 口味记忆 · MCP 实战踩坑指南 · 能力现状披露 |
-| v1.6.0 | 用券排程（可实现 vs 注定过期）· 券面值实测 · 可分享 HTML 体检报告 · 离线全链路 demo |
+| v2.0.2 | 移动端文案适配 + 悬浮计算按钮（结果可达性）|
+| v2.0.1 | 试算页移动端导入路径（Agent 粘贴 / menu.json 文件）|
+| v2.0.0 | 版本号自动递增工具（自定义 z.x.y 格式：y≤3、x≤6）|
+| v1.7.4 | 试算页移动端优化（触控 44px / iOS 输入缩放规避）|
+| v1.7.3 | 试算页 Token 快速导入卡片置顶 · 团购示例扩充 11 条 |
+| v1.7.2 | 用券排程升级净价值模型（修正高估）· 客单价口径修正 |
+| v1.7.1 | 省钱等级（S/A/B/C/D）· 参数自动串联技巧 |
+| v1.7.0 | 点餐替换建议（热量代价从小到大）· 口味记忆 · MCP 实战踩坑指南 |
+| v1.6.0 | 用券排程 · 券面值实测 · 可分享 HTML 体检报告 · 离线全链路 demo |
 | v1.5.0 | 营养约束：蛋白质下限 / 钠上限，违规如实标注 |
 | v1.4.x | 多维约束 + 套餐替换 + 积分影子价格 + 一键领券 |
+
 
 完整变更记录见 [CHANGELOG.md](CHANGELOG.md)，各版本下载见
 [Releases](https://github.com/yuxinlaile/McD-saver/releases)。
@@ -301,6 +294,14 @@ CHANGELOG 补充 · **README 中英同步**。
 本项目代码以 [MIT](LICENSE) 许可证发布；运行依赖麦当劳中国 MCP 服务及上游
 集成指南仓库（[M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)），
 相关使用须遵守其服务条款与上游限制。
+
+## 反馈与支持
+
+如有问题或建议，欢迎在 [讨论区留言](https://github.com/yuxinlaile/McD-saver/discussions)，
+或按场景选择：🐛 [提交 Bug 报告](https://github.com/yuxinlaile/McD-saver/issues/new?template=bug_report.md) ·
+💡 [提出功能建议](https://github.com/yuxinlaile/McD-saver/issues/new?template=feature_request.md) ·
+🤝 [分享团购券数据](https://github.com/yuxinlaile/McD-saver/discussions)（助力比价库更全）。
+每一条反馈都会认真查看——这也是试算页持续按真实使用场景优化的来源。
 
 ## Star History
 
