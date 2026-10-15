@@ -42,6 +42,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 EXIT_OK = 0
@@ -300,6 +301,47 @@ def _fmt(value: Optional[float]) -> str:
     return "¥{0:.2f}".format(value) if value is not None else "—"
 
 
+def cross_channel_section(result: Dict[str, Any], deals_path: Optional[str] = None) -> str:
+    """官方最优方案自动衔接团购终局建议（v2.0.3）。
+
+    复用 deal_compare.compare_deals 的同口径折算：以无券直点为原价口径、
+    最优实付为官方可比价基准；本地券库（MAIMAI_DEALS_FILE 或默认路径）
+    存在且非空时输出「官方 vs 团购」结论，否则返回空串。估算标注不省略。
+    """
+    baseline = result.get("baseline")
+    ranked = result.get("ranked") or []
+    if not baseline or baseline <= 0 or not ranked:
+        return ""
+    best = ranked[0]
+    if best.payable is None or best.payable <= 0:
+        return ""
+    try:
+        from deal_compare import _load_deals, compare_deals
+        deals = _load_deals(deals_path) if deals_path else _load_deals(
+            os.environ.get("MAIMAI_DEALS_FILE", str(Path.home() / ".maimai_saver" / "deals.json")))
+    except Exception:
+        return ""
+    if not deals:
+        return ""
+    report = compare_deals(deals, mcd_face=baseline, mcd_price=float(best.payable))
+    entries = [e for e in report["deals"] if e["validity"] != "expired"]
+    if not entries:
+        return ""
+    best_deal = entries[0]
+    lines = ["",
+             "---- 团购终局建议（估算口径，非下单依据）----",
+             "官方最优：{0}（实付 {1}）".format(best.label or "无券直点", _fmt(best.payable)),
+             "团购最优：[{0}] {1}（估算到手 {2}，券售价 {3}/面值 {4}）".format(
+                 best_deal.get("platform", ""), best_deal.get("title", ""),
+                 _fmt(best_deal["estimated_price"]), _fmt(best_deal["price"]), _fmt(best_deal["face_value"]))]
+    if best_deal["estimated_saving_vs_mcd"] > 0:
+        lines.append("结论：团购估算更低，约再省 {0}——记得核对适用门店/时段与不可叠加限制。".format(
+            _fmt(best_deal["estimated_saving_vs_mcd"])))
+    else:
+        lines.append("结论：官方渠道（含券）已更优，无需动用团购券。")
+    return "\n".join(lines)
+
+
 def render_report(result: Dict[str, Any], mode_label: str) -> str:
     baseline = result["baseline"]
     ranked: List[Plan] = result["ranked"]
@@ -412,6 +454,8 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--store-code", default="", help="真实计价模式必填：门店编码")
     plan.add_argument("--order-type", type=int, default=1, help="1=到店(默认) 2=外送")
     plan.add_argument("--top", type=int, default=3, help="输出前 N 个方案（默认 3）")
+    plan.add_argument("--no-deals", action="store_true",
+                      help="不自动衔接团购终局建议（默认：本地券库非空时自动输出）")
     plan.add_argument("--budget", type=float, default=None, help="实付预算上限（元），超支方案排后并打标")
     plan.add_argument("--max-kcal", type=float, default=None, help="热量上限（kcal），菜单含 kcal 字段时生效")
     plan.add_argument("--min-protein", type=float, default=None,
@@ -420,7 +464,9 @@ def build_parser() -> argparse.ArgumentParser:
                       help="钠上限（mg），菜单含 sodium 字段时生效；数据缺失的方案按不满足处理")
     plan.add_argument("--json", dest="as_json", action="store_true", help="JSON 输出")
 
-    sub.add_parser("demo", help="离线演示（内嵌示例数据，估算模式）")
+    demo = sub.add_parser("demo", help="离线演示（内嵌示例数据，估算模式）")
+    demo.add_argument("--no-deals", action="store_true",
+                      help="不自动衔接团购终局建议")
     return parser
 
 
@@ -486,6 +532,10 @@ def run_plan(args: argparse.Namespace) -> int:
         }, ensure_ascii=False, indent=2))
     else:
         print(render_report(result, mode_label))
+        if not args.no_deals:
+            cc = cross_channel_section(result)
+            if cc:
+                print(cc)
     return EXIT_OK
 
 
@@ -500,6 +550,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         result = score_and_rank(plans, make_local_pricer(DEMO_MENU), top=3,
                                 kcal_table=kcal_table)
         print(render_report(result, "估算模式（本地计价，未经验证）"))
+        if not args.no_deals:
+            cc = cross_channel_section(result)
+            if cc:
+                print(cc)
         return EXIT_OK
     parser.print_help()
     return EXIT_OK
