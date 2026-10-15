@@ -167,6 +167,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.apply:
         for f in apply_version(nxt):
             print("updated:", f)
+        print("提醒：--apply 不覆盖测试计数。发版前请同步更新以下位置的用例数：")
+        print("  docs/assets/banner.svg · README.md/README_EN.md（Tests 徽章与测试保障段）· SKILL.md 目录树")
+        print("  并在 CHANGELOG 增加新版本条目、于 #275 同步版本进展。")
     return 0
 
 
