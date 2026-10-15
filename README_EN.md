@@ -7,10 +7,10 @@
 **Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8E%AE_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/McD-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.7.1-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v1.7.1)
+[![Release](https://img.shields.io/badge/Release-v1.7.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v1.7.2)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-117%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -102,7 +102,7 @@ One repo, three ways to use it:
 - 401 fails fast; 429 exponential backoff honoring `Retry-After`; 5xx/network auto-retry
 - Scope boundary: focused on pre-order savings decisions — no scraping, auto-ordering or unattended scheduling capabilities
 
-**🧪 Tested**: 117 unit tests covering SSE parsing, token resolution, backoff math,
+**🧪 Tested**: 122 unit tests covering SSE parsing, token resolution, backoff math,
 comparison decisions, combination optimization and CLI exit codes; the full
 `demo.py` pipeline is asserted by `tests/test_demo_pipeline.py` — **the demo
 doubles as a regression test**.
@@ -275,6 +275,7 @@ Current version **v1.7.0**. Recent highlights:
 
 | Version | Highlights |
 |---|---|
+| **v1.7.2** | Coupon scheduling upgraded to net-value model · avg-ticket basis fix |
 | **v1.7.1** | Savings grade (S/A/B/C/D) · parameter-chaining guide |
 | **v1.7.0** | Swap suggestions ordered by kcal cost · taste memory · MCP pitfalls guide · capability status disclosure |
 | v1.6.0 | Coupon scheduling (realizable vs doomed) · coupon-value probing · shareable HTML report · offline full-pipeline demo |
