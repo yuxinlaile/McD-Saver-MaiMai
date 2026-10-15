@@ -10,7 +10,7 @@
 [![Release](https://img.shields.io/badge/Release-v2.0.3-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.3)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-154%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -102,7 +102,7 @@ One repo, three ways to use it:
 - 401 fails fast; 429 exponential backoff honoring `Retry-After`; 5xx/network auto-retry
 - Scope boundary: focused on pre-order savings decisions — no scraping, auto-ordering or unattended scheduling capabilities
 
-**🧪 Tested**: 122 unit tests covering SSE parsing, token resolution, backoff math,
+**🧪 Tested**: 154 unit tests covering SSE parsing, token resolution, backoff math,
 comparison decisions, combination optimization and CLI exit codes; the full
 `demo.py` pipeline is asserted by `tests/test_demo_pipeline.py` — **the demo
 doubles as a regression test**.
@@ -154,7 +154,7 @@ never fabricate discounts**.
 | `python scripts/mcd.py schema <tool>` | Inspect a tool's input schema |
 | `python scripts/mcd.py call <tool> --arg k=v` | Call an official tool (`--raw` for raw output) |
 | `python scripts/mcd.py claim` | Claim available coupons (list → confirm → bind) |
-| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | Combination optimizer; `--budget/--max-kcal/--min-protein/--max-sodium` constraints |
+| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | Combination optimizer; `--budget/--max-kcal/--min-protein/--max-sodium` constraints; auto group-buy final call when the deal library is non-empty (`--no-deals` to disable) |
 | `python scripts/deal_compare.py add/list/compare` | Record group-buys & cross-channel comparison |
 | `python scripts/silent_cost.py report --coupons c.json --orders o.json --points p.json` | Silent-cost check; `--probe` measures coupon value / `--html` generates a shareable report |
 

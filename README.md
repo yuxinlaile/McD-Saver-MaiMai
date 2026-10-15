@@ -10,7 +10,7 @@
 [![Release](https://img.shields.io/badge/Release-v2.0.3-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.3)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
-![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-154%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
@@ -97,7 +97,7 @@
 - 401 快速失败、429 指数退避尊重 `Retry-After`、5xx/网络错误自动重试
 - 范围边界：聚焦下单前的省钱决策——不包含爬虫、自动下单、无人值守定时领券等自动化能力
 
-**🧪 测试保障**：122 个单元测试覆盖 SSE 解析、Token 解析、退避计算、比价决策、
+**🧪 测试保障**：154 个单元测试覆盖 SSE 解析、Token 解析、退避计算、比价决策、
 组合优化与 CLI 退出码；`demo.py` 全链路输出被 `tests/test_demo_pipeline.py`
 断言——**demo 即回归测试**。
 
@@ -145,7 +145,7 @@ python demo.py          # 离线全链路：领券→选券→比价→积分→
 | `python scripts/mcd.py schema <tool>` | 查看指定工具的入参 JSON Schema |
 | `python scripts/mcd.py call <tool> --arg k=v` | 调用官方工具（`--raw` 原始输出） |
 | `python scripts/mcd.py claim` | 一键领取可领券（展示清单→确认→领取） |
-| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | 券组合优化；`--budget/--max-kcal/--min-protein/--max-sodium` 四维约束 |
+| `python scripts/optimizer.py plan --wants w.json --menu m.json --coupons c.json [--mcp]` | 券组合优化；`--budget/--max-kcal/--min-protein/--max-sodium` 四维约束；本地券库非空时自动输出团购终局建议（`--no-deals` 关闭） |
 | `python scripts/deal_compare.py add/list/compare` | 团购券录入与全渠道比价 |
 | `python scripts/silent_cost.py report --coupons c.json --orders o.json --points p.json` | 沉默成本体检；`--probe` 实测券价值 / `--html` 生成分享报告 |
 

@@ -284,5 +284,5 @@ maimai-saver/
 │   └── error-handling.md               # 错误码、重试策略与排查指南
 ├── examples/
 │   └── order-flow-example.md           # 一次完整省钱点餐的示例会话
-└── tests/                              # pytest 单元测试（122 个用例）
+└── tests/                              # pytest 单元测试（154 个用例）
 ```
