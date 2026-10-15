@@ -7,7 +7,7 @@
 **让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/McD-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v1.7.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v1.7.2)
+[![Release](https://img.shields.io/badge/Release-v1.7.3-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v1.7.3)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
@@ -262,6 +262,7 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 
 | 版本 | 亮点 |
 |---|---|
+| **v1.7.3** | 试算页 Token 快速导入卡片置顶 · 团购示例扩充 11 条 |
 | **v1.7.2** | 用券排程升级净价值模型（修正高估）· 客单价口径修正 |
 | **v1.7.1** | 省钱等级（S/A/B/C/D）· 参数自动串联技巧 |
 | **v1.7.0** | 点餐替换建议（热量代价从小到大）· 口味记忆 · MCP 实战踩坑指南 · 能力现状披露 |
