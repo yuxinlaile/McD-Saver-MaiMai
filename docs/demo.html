@@ -44,6 +44,8 @@
     input, textarea, select { font-size:16px !important; }
     button { min-height:44px; }  /* 触控目标 ≥44px */
     .toolbar input { min-width:0; width:100%; }
+    .desktop-flow { display:none !important; }
+    .mobile-only { display:block !important; }
     #tokenBox, #storeBox { min-width:0; width:100%; flex:1 1 100%; }  /* 窄屏纵向堆叠，消除横向溢出 */
     #cmdBox, #importBox { width:100%; }
     .wrap { overflow-x:hidden; }
@@ -137,6 +139,16 @@
       本页为你生成一条现成命令——<b>复制到本地终端执行</b>，把输出粘贴到下面输入框，即可用<b>实时全量菜单</b>跑同一套优化算法。
       Token 仅在你的浏览器内存中拼接命令，<b>不会上传到任何服务器</b>（本页为纯静态页面，且浏览器直连 MCP 受 CORS 限制，这是最安全便捷的路径）。
     </div>
+    <div class="mobile-only" style="display:none;">
+      <div class="notice" style="margin:0 0 10px;background:#fffbeb;">
+        <b>📱 手机上这样导入真实菜单（无需电脑）：</b><br>
+        路径 ①　你已安装 AI Agent（WorkBuddy / Claude 等）并装好本技能——
+        对它说「导入真实菜单」，把它输出的 <code>query-meals</code> JSON
+        <b>复制</b>后粘贴到下方输入框即可。<br>
+        路径 ②　已有 <code>menu.json</code> 文件——直接用下方<b>「选择文件」</b>按钮导入。
+      </div>
+    </div>
+    <div class="desktop-flow">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <input id="tokenBox" type="password" placeholder="粘贴 MCP Token（浏览器内存中，不外传）"
              style="flex:2;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;">
@@ -151,8 +163,16 @@
     <textarea id="cmdBox" readonly style="width:100%;height:88px;margin-top:10px;border:1px solid var(--line);
       border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;background:#fffbeb;"
       placeholder="点击上方按钮生成命令 → 复制到本地终端执行（需先按 README 完成 30 秒安装：git clone 本仓库并安装 Python 3.9+）"></textarea>
+    </div><!-- /desktop-flow -->
+    <div class="mobile-only" style="display:none;margin-top:10px;">
+      <input type="file" id="menuFile" accept=".json,application/json" style="display:none;"
+             onchange="importMenuFile(this)">
+      <button class="calc" style="width:100%;min-height:44px;padding:12px;font-size:14px;"
+              onclick="document.getElementById('menuFile').click()">📄 选择 menu.json 文件导入</button>
+    </div>
     <div style="margin-top:12px;">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">② 命令执行后，把输出的 JSON 全部粘贴到这里：</div>
+      <div class="desktop-flow" style="font-size:13px;color:var(--muted);margin-bottom:6px;">② 命令执行后，把输出的 JSON 全部粘贴到这里：</div>
+      <div class="mobile-only" style="display:none;font-size:13px;color:var(--muted);margin-bottom:6px;">把 Agent 输出的 <code>query-meals</code> JSON 粘贴到这里（或用上方文件按钮）：</div>
       <textarea id="importBox" style="width:100%;height:110px;border:1px solid var(--line);
         border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;"
         placeholder='粘贴 query-meals 的 JSON 输出…（也接受简化数组：[{"name":"巨无霸","price":25.0}]）'></textarea>
@@ -522,6 +542,20 @@ function unwrapItems(raw) {
     }
   }
   return Array.isArray(data) ? data.filter(x => x && typeof x === "object") : [];
+}
+
+// ---- 移动端：menu.json 文件导入 ----
+function importMenuFile(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById("importBox").value = String(reader.result || "");
+    importMenu();
+    input.value = "";
+  };
+  reader.onerror = () => { document.getElementById("importStatus").textContent = "文件读取失败，请重试。"; };
+  reader.readAsText(file, "utf-8");
 }
 
 // ---- Token 快速导入：命令生成与复制（Token 仅存在于浏览器内存）----
