@@ -229,3 +229,41 @@ class TestHtmlReport:
         assert "注定过期" in html and "maimai-saver" in html
         assert "http://" not in html.replace("http://www.w3.org", "")  # 零外部资源
         assert "<script" not in html  # 无脚本，纯静态
+
+
+class TestSavingsGrade:
+    """v1.7.1 新增：HTML 报告省钱等级（确定性分档）。"""
+
+    def _schedule(self, realizable):
+        return {"realizable": realizable, "doomed": 0.0, "face_total": realizable,
+                "window_days": 1, "expected_orders": 1, "frequency": 1.0,
+                "scheduled": [], "missed": []}
+
+    def test_grade_thresholds(self):
+        from silent_cost import savings_grade
+        assert savings_grade(self._schedule(35.0))[0] == "S"
+        assert savings_grade(self._schedule(20.0))[0] == "A"
+        assert savings_grade(self._schedule(8.0))[0] == "B"
+        assert savings_grade(self._schedule(2.0))[0] == "C"
+        assert savings_grade(self._schedule(0.5))[0] == "D"
+
+    def test_no_schedule_returns_dash(self):
+        from silent_cost import savings_grade
+        assert savings_grade(None) == ("—", "")
+
+    def test_grade_note_contains_amount(self):
+        from silent_cost import savings_grade
+        grade, note = savings_grade(self._schedule(35.0))
+        assert "35.00" in note
+
+    def test_html_contains_grade_row(self):
+        from silent_cost import (analyze_coupons, analyze_orders, analyze_points,
+                                 render_html, schedule_coupons)
+        coupons = analyze_coupons({"data": [
+            {"title": "满30减6", "parValue": 30.0, "validityEndTime": "2026-10-13"}]},
+            today=datetime(2026, 10, 12))
+        orders = analyze_orders({"data": [{"createTime": "2026-10-12", "totalAmount": 30.0}]},
+                                today=datetime(2026, 10, 12))
+        schedule = schedule_coupons(coupons, orders)
+        html = render_html(coupons, orders, analyze_points({}), None, schedule)
+        assert "本期省钱等级" in html
