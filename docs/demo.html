@@ -113,6 +113,41 @@
     <div class="sub">券组合优化 + 团购比价 算法前端复刻 —— 官方最优 vs 团购估算，一次算清</div>
   </header>
 
+  <!-- 🔑 Token 快速导入（页面最上方显著位置）：生成命令 → 本地执行 → 粘贴回传 -->
+  <div class="card" style="border:2px solid var(--amber);">
+    <h2>🔑 导入你的真实菜单（输入 Token，30 秒同步麦当劳 App 全量菜单）<span class="hint">推荐 · 显著位置</span></h2>
+    <div class="notice" style="margin:0 0 12px;">
+      下方示例菜单是 31 项参考快照；输入你的 <b>MCP Token</b>（<a href="https://open.mcd.cn/mcp" target="_blank" rel="noopener">open.mcd.cn/mcp</a> 申请），
+      本页为你生成一条现成命令——<b>复制到本地终端执行</b>，把输出粘贴到下面输入框，即可用<b>实时全量菜单</b>跑同一套优化算法。
+      Token 仅在你的浏览器内存中拼接命令，<b>不会上传到任何服务器</b>（本页为纯静态页面，且浏览器直连 MCP 受 CORS 限制，这是最安全便捷的路径）。
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <input id="tokenBox" type="password" placeholder="粘贴 MCP Token（浏览器内存中，不外传）"
+             style="flex:2;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;">
+      <input id="storeBox" type="text" placeholder="门店编码（App 订单详情可见，可留空）"
+             style="flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+      <button class="calc" style="flex:none;padding:9px 16px;font-size:13px;" onclick="genCmd('ps')">⚙️ 生成 Windows 命令</button>
+      <button class="calc" style="flex:none;padding:9px 16px;font-size:13px;" onclick="genCmd('bash')">⚙️ 生成 macOS/Linux 命令</button>
+      <button class="reset" style="flex:none;padding:9px 16px;font-size:13px;" onclick="copyCmd()">📋 复制命令</button>
+    </div>
+    <textarea id="cmdBox" readonly style="width:100%;height:88px;margin-top:10px;border:1px solid var(--line);
+      border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;background:#fffbeb;"
+      placeholder="点击上方按钮生成命令 → 复制到本地终端执行（需先按 README 完成 30 秒安装：git clone 本仓库并安装 Python 3.9+）"></textarea>
+    <div style="margin-top:12px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">② 命令执行后，把输出的 JSON 全部粘贴到这里：</div>
+      <textarea id="importBox" style="width:100%;height:110px;border:1px solid var(--line);
+        border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;"
+        placeholder='粘贴 query-meals 的 JSON 输出…（也接受简化数组：[{"name":"巨无霸","price":25.0}]）'></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="calc" style="flex:none;padding:9px 18px;font-size:13px;" onclick="importMenu()">✅ 导入并替换菜单</button>
+        <button class="reset" onclick="restoreSample()">恢复示例菜单</button>
+      </div>
+      <div id="importStatus" class="notice" style="margin-top:10px;">尚未导入。</div>
+    </div>
+  </div>
+
   <div class="layout">
     <div>
       <div class="card">
@@ -123,9 +158,8 @@
         <div class="toolbar" id="chips"></div>
         <div id="menu"></div>
         <div class="notice">示例菜单覆盖麦当劳 App 主流单品与套餐（31 项，价格为 2026-10 参考价）。
-          App 全量菜单按门店/时段动态变化且规模远大于此——静态页内置全量会立刻过时，
-          也不符合 MCP 服务规则的数据使用边界；正确姿势见下方「📥 导入真实菜单」：
-          用你的 Token 跑 <code>query-meals</code>，把输出粘贴进来即可用<b>实时全量菜单</b>跑同一套优化算法。</div>
+          App 全量菜单按门店/时段动态变化——用<b>页面顶部「🔑 导入你的真实菜单」</b>输入 Token 生成命令，
+          本地执行后把输出粘贴回来，即可用<b>实时全量菜单</b>跑同一套优化算法。</div>
       </div>
       <div class="card">
         <h2>② 可用券<span class="hint">自动参与组合优化</span></h2>
@@ -138,27 +172,6 @@
           当前购物车原价 ×（团购售价 ÷ 券面值）。团购券内容固定，能否覆盖你的购物车以平台券详情页为准。</div>
       </div>
 
-      <details class="card">
-        <summary style="cursor:pointer;font-size:14px;color:var(--red);font-weight:bold;">
-          📥 导入真实菜单（进阶：同步麦当劳 App 全量可选项目）</summary>
-        <div style="margin-top:12px;">
-          <div class="notice" style="margin:0 0 10px;">
-            步骤：申请 MCP Token（open.mcd.cn/mcp）→ 执行
-            <code>python scripts/mcd.py call query-meals --raw &gt; menu.json</code>
-            → 把 <code>menu.json</code> 的全部内容粘贴到下方 → 点击导入。
-            页面会做宽容字段解析（名称/价格/热量/套餐组成），解析失败的字段会如实提示。
-            这就是「全量同步」的正确姿势：数据实时、全量、且只在你本地使用。
-          </div>
-          <textarea id="importBox" style="width:100%;height:120px;border:1px solid var(--line);
-            border-radius:8px;padding:10px;font-size:12px;font-family:ui-monospace,Consolas,monospace;"
-            placeholder='粘贴 query-meals 的 JSON 输出…（也接受简化数组：[{"name":"巨无霸","price":25.0}]）'></textarea>
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button class="calc" style="flex:none;padding:9px 18px;font-size:13px;" onclick="importMenu()">导入并替换菜单</button>
-            <button class="reset" onclick="restoreSample()">恢复示例菜单</button>
-          </div>
-          <div id="importStatus" class="notice" style="margin-top:10px;">尚未导入。</div>
-        </div>
-      </details>
     </div>
 
     <div class="sticky">
@@ -249,9 +262,14 @@ const DEALS = [
   {platform:"meituan", title:"巨无霸中套餐单次券", price:29.9, face:41.0},
   {platform:"meituan", title:"满40减14代金券", price:25.9, face:40.0},
   {platform:"meituan", title:"双人餐 A 套券", price:69.9, face:98.0},
+  {platform:"meituan", title:"板烧鸡腿堡中套餐单次券", price:33.9, face:41.0},
+  {platform:"meituan", title:"早餐组合两件套券", price:15.9, face:22.5},
   {platform:"douyin",  title:"麦辣鸡腿堡三件套单次券", price:24.9, face:33.5},
   {platform:"douyin",  title:"随心配 1+1 团购券", price:9.9, face:13.5},
   {platform:"douyin",  title:"甜品第二件半价券", price:6.9, face:13.5},
+  {platform:"douyin",  title:"巨无霸中套餐单次券", price:31.9, face:39.5},
+  {platform:"douyin",  title:"满30减8代金券", price:19.9, face:30.0},
+  {platform:"douyin",  title:"双层吉士中套餐单次券", price:27.9, face:34.0},
 ];
 const ADDON_LIMIT = 3;
 const ADDON_HINT = "仅当你本来就需要该商品才划算";
@@ -488,6 +506,29 @@ function unwrapItems(raw) {
     }
   }
   return Array.isArray(data) ? data.filter(x => x && typeof x === "object") : [];
+}
+
+// ---- Token 快速导入：命令生成与复制（Token 仅存在于浏览器内存）----
+function genCmd(platform) {
+  const token = (document.getElementById("tokenBox").value || "").trim().replace(/"/g, "");
+  const store = (document.getElementById("storeBox").value || "").trim().replace(/["']/g, "");
+  const box = document.getElementById("cmdBox");
+  if (!token) { box.value = "请先粘贴你的 MCP Token（open.mcd.cn/mcp 申请）。"; return; }
+  const args = store ? ` --args '{"storeCode":"${store}"}'` : "";
+  const tok = ` --token "${token}"`;  // Token 内嵌命令，终端无需预设环境变量
+  if (platform === "ps") {
+    box.value = `python scripts/mcd.py call query-meals${args}${tok} --raw | Set-Content -Encoding UTF8 menu.json; Get-Content menu.json`;
+  } else {
+    box.value = `python scripts/mcd.py call query-meals${args}${tok} --raw > menu.json && cat menu.json`;
+  }
+}
+function copyCmd() {
+  const box = document.getElementById("cmdBox");
+  const text = box.value;
+  if (!text || text.startsWith("请先粘贴")) { toast("请先生成命令"); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+    .then(() => toast("命令已复制，去终端执行吧"))
+    .catch(() => { box.select(); document.execCommand("copy"); toast("命令已复制"); });
 }
 
 function importMenu() {
