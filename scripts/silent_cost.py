@@ -481,6 +481,7 @@ def render_html(coupons: Dict[str, Any], orders: Dict[str, Any],
                 generated: Optional[str] = None) -> str:
     """生成零依赖单文件 HTML 报告——可直接截图分享的「体检长图」。"""
     now = generated or datetime.now().strftime("%Y-%m-%d %H:%M")
+    grade, grade_note = savings_grade(schedule)
     rows = []
     if coupons["expiring"]:
         for c in coupons["expiring"]:
@@ -496,6 +497,9 @@ def render_html(coupons: Dict[str, Any], orders: Dict[str, Any],
                 _fmt_html(schedule["realizable"]), _fmt_html(schedule["doomed"]))
         stat += "</div>"
         rows.append(stat)
+        if grade != "—":
+            rows.append('<div class="row"><span>🏅 本期省钱等级 <b>{0}</b>{1}</span></div>'.format(
+                grade, f' — {grade_note}' if grade_note else ''))
         if schedule:
             for c in schedule["scheduled"]:
                 rows.append('<div class="row"><span>🥇 {0} → {1}</span><span class="money good">{2}</span></div>'.format(
@@ -545,6 +549,28 @@ def _esc(text: Any) -> str:
 
 def _fmt_html(value: Optional[float]) -> str:
     return "¥{0:.2f}".format(value) if value is not None else "—"
+
+
+# ---------------------------------------------------------------------------
+# 省钱等级（v1.7.1）：确定性分档，基于排程可实现金额，供分享卡片展示
+# ---------------------------------------------------------------------------
+def savings_grade(schedule: Optional[Dict[str, Any]]) -> Tuple[str, str]:
+    """按排程「可实现金额」确定性分档：S≥30 / A≥15 / B≥5 / C≥1 / D<1。
+
+    返回 (等级, 一句话说明)；无排程数据返回 ("—", "")。
+    """
+    if not schedule or schedule.get("realizable") is None:
+        return ("—", "")
+    value = float(schedule["realizable"])
+    if value >= 30:
+        return ("S", "本期可实现节省 ¥{0:.2f}，稳稳拿捏".format(value))
+    if value >= 15:
+        return ("A", "本期可实现节省 ¥{0:.2f}".format(value))
+    if value >= 5:
+        return ("B", "本期可实现节省 ¥{0:.2f}".format(value))
+    if value >= 1:
+        return ("C", "本期可实现节省 ¥{0:.2f}".format(value))
+    return ("D", "本期可实现节省 ¥{0:.2f}——下期记得提前排程用券".format(value))
 
 
 # ---------------------------------------------------------------------------
