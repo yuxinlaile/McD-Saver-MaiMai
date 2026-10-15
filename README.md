@@ -112,7 +112,8 @@ python demo.py          # 离线全链路：领券→选券→比价→积分→
 ```
 
 或直接打开[在线试算页](https://yuxinlaile.github.io/McD-saver/demo.html)（免登录，
-31 项菜单 / 9 张券 / 6 单团购示例，支持粘贴 MCP `query-meals` 输出一键导入真实菜单）。
+31 项菜单 / 9 张券 / 11 条团购示例；支持 **Token 快速导入**——桌面生成命令、
+手机端 Agent 粘贴或 menu.json 文件导入，同步麦当劳 App 全量真实菜单）。
 
 ### 安装步骤
 
