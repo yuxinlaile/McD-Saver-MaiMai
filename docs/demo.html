@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#c2410c">
 <title>麦麦省钱助手 · 在线试算</title>
 <style>
   :root {
@@ -36,6 +37,21 @@
   .group-title::after { content:""; flex:1; height:1px; background:var(--line); }
   .items { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   @media (max-width:560px) { .items { grid-template-columns:1fr; } }
+  /* ---- 移动端优化（触控友好 / iOS 输入缩放规避 / 密度） ---- */
+  @media (max-width:640px) {
+    .card { padding:14px; }
+    /* iOS Safari 聚焦 <16px 输入框会强制缩放页面 —— 输入类统一 16px */
+    input, textarea, select { font-size:16px !important; }
+    button { min-height:44px; }  /* 触控目标 ≥44px */
+    .toolbar input { min-width:0; width:100%; }
+    #tokenBox, #storeBox { min-width:0; width:100%; flex:1 1 100%; }  /* 窄屏纵向堆叠，消除横向溢出 */
+    #cmdBox, #importBox { width:100%; }
+    .wrap { overflow-x:hidden; }
+    header .brand { font-size:18px; }
+  }
+  @media (max-width:860px) {
+    .sticky { order:-1; }  /* 结果卡在移动端置顶，选完即见，无需长滚动 */
+  }
   .item { display:flex; align-items:center; gap:10px; border:1.5px solid var(--line);
           border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
           transition:border-color .15s, background .15s, transform .05s; }
