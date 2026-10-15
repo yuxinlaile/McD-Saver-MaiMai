@@ -7,7 +7,7 @@
 **让 AI 帮你用最少的钱吃麦当劳** —— Agent Skill + 独立 CLI 二合一
 
 [![在线试算](https://img.shields.io/badge/%F0%9F%8C%90_在线试算-免登录-FFC72C?style=flat-square)](https://yuxinlaile.github.io/McD-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v2.0.1-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.1)
+[![Release](https://img.shields.io/badge/Release-v2.0.2-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.2)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
@@ -262,6 +262,7 @@ Cherry Studio / Trae / VSCode / Kiro 各自 MCP 设置页 · Codex `~/.codex/con
 
 | 版本 | 亮点 |
 |---|---|
+| **v2.0.2** | 移动端文案适配 + 悬浮计算按钮（结果可达性）|
 | **v2.0.1** | 试算页移动端导入路径（Agent 粘贴 / menu.json 文件）|
 | **v2.0.0** | 版本号自动递增工具（自定义 z.x.y 格式：y≤3、x≤6）|
 | **v1.7.4** | 试算页移动端优化（触控 44px / iOS 输入缩放规避 / 结果置顶）|
