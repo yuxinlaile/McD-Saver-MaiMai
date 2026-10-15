@@ -7,7 +7,7 @@
 **Let AI get you McDonald's for less** — Agent Skill + standalone CLI in one repo
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8E%AE_Live_Demo-no_sign--in-FFC72C?style=flat-square)](https://yuxinlaile.github.io/McD-saver/demo.html)
-[![Release](https://img.shields.io/badge/Release-v2.0.0-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/Release-v2.0.1-9a3412?style=flat-square)](https://github.com/yuxinlaile/McD-saver/releases/tag/v2.0.1)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/Dependencies-None%20(stdlib)-green)
 ![Tests](https://img.shields.io/badge/Tests-122%20passed-brightgreen)
@@ -275,6 +275,7 @@ Current version **v1.7.0**. Recent highlights:
 
 | Version | Highlights |
 |---|---|
+| **v2.0.1** | Mobile import paths (agent paste / menu.json file) |
 | **v2.0.0** | Auto version-bump tool (custom z.x.y scheme: y≤3, x≤6) |
 | **v1.7.4** | Mobile optimization (44px touch targets / iOS zoom fix / result card on top) |
 | **v1.7.3** | Demo token-import card pinned to top · group-buy samples 6→11 |
