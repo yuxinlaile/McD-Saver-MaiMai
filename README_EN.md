@@ -118,8 +118,9 @@ python demo.py          # offline full pipeline: claim → pick → price → po
 ```
 
 Or open the [online calculator](https://yuxinlaile.github.io/McD-saver/demo.html)
-(no sign-in; 31 menu items / 9 coupons / 6 group-buy samples; paste your MCP
-`query-meals` output to import the real menu in one click).
+(no sign-in; 31 menu items / 9 coupons / 11 group-buy samples; **token quick-import**
+— desktop generates the command, mobile imports via agent paste or a menu.json file —
+to sync the full real McDonald's App menu).
 
 ### Installation
 
