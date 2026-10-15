@@ -132,6 +132,18 @@ def _parse_expire_days(value: Any, today: datetime) -> Optional[int]:
     return None
 
 
+def _coupon_threshold(coupon: Dict[str, Any]) -> Optional[float]:
+    """解析满减门槛（元）：字段优先，标题正则兜底（「满X减Y」）。"""
+    threshold = _parse_amount(_first_key(coupon, ["spendLine", "threshold", "minSpend", "minOrderAmount"]))
+    if threshold is not None and threshold > 0:
+        return threshold
+    title = str(coupon.get("title") or coupon.get("couponName") or "")
+    match = re.search(r"满(\d+(?:\.\d+)?)减", title)
+    if match:
+        return float(match.group(1))
+    return None
+
+
 def _coupon_face(coupon: Dict[str, Any]) -> Optional[float]:
     face = _parse_amount(_first_key(coupon, FACE_KEYS))
     if face is not None:
@@ -163,6 +175,7 @@ def analyze_coupons(coupons_raw: Any, today: Optional[datetime] = None) -> Dict[
         if 0 <= days <= EXPIRING_DAYS:
             title = str(coupon.get("title") or coupon.get("couponName") or coupon.get("couponId") or "未命名券")
             expiring.append({"title": title, "face": face, "days": days,
+                             "threshold": _coupon_threshold(coupon),
                              "couponId": coupon.get("couponId"),
                              "productCode": _first_key(coupon, ["productCode", "itemCode", "goodsCode", "mealCode"])})
     expiring.sort(key=lambda c: c["days"])
@@ -181,12 +194,18 @@ def analyze_orders(orders_raw: Any, today: Optional[datetime] = None) -> Dict[st
     order_days: List[datetime] = []
     item_counter: Dict[str, int] = {}
     unrecognized = 0
+    free_count = 0
     for order in records:
         amount = _parse_amount(_first_key(order, AMOUNT_KEYS))
         if amount is None:
             unrecognized += 1
-        else:
+        elif amount > 0:
+            # 消费口径：0 元订单（券核销/积分兑换）不计入客单价——
+            # 拿它当「不看券时的自然消费基准」是循环论证，会系统性拉低基准
+            #（口径分离借鉴 mcd-coupon-strategist auditor.py，MIT License）
             amounts.append(amount)
+        else:
+            free_count += 1
         when = _first_key(order, TIME_KEYS)
         if when is not None:
             for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%Y/%m/%d"):
@@ -215,6 +234,7 @@ def analyze_orders(orders_raw: Any, today: Optional[datetime] = None) -> Dict[st
     return {
         "order_count": len(records),
         "amount_count": len(amounts),
+        "free_order_count": free_count,
         "total_spend": total if amounts else None,
         "avg_ticket": (total / len(amounts)) if amounts else None,
         "order_frequency": frequency,
@@ -227,21 +247,40 @@ def analyze_orders(orders_raw: Any, today: Optional[datetime] = None) -> Dict[st
 # 用券排程（v1.6）：过期窗口 × 点单频率 → 可实现 vs 注定过期
 # ---------------------------------------------------------------------------
 def schedule_coupons(coupons: Dict[str, Any], orders: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """把临期券按面值降序排入「过期窗口内的预期点单次数」。
+    """把临期券按**净价值**降序排入「过期窗口内的预期点单次数」。
 
-    窗口 = 临期券中最早到期的天数（全部可用的期限内）；预期点单次数 =
-    点单频率 × 窗口（向下取整，至少 1）。排不进点单的券标记为注定过期——
-    名义面值再高，用不上就不算钱。数据不足（无频率或无临期券）返回 None。
+    净价值 = 券面价值 − max(0, 满减门槛 − 自然消费基准)（借鉴
+    mcd-coupon-strategist planner.py 的净价值模型，MIT License）——
+    满减门槛远超客单价的券是「纸面富贵」，名义面值再高也不排入。
+
+    窗口 = 临期券中最早到期的天数；预期点单次数 = 点单频率 × 窗口
+    （向下取整，至少 1）。净价值 ≤ 0 的券标记为 paper（劝退），
+    排不进点单的标记为 missed——名义面值再高，用不上就不算钱。
+    数据不足（无频率或无临期券）返回 None。
     """
     expiring = [c for c in coupons.get("expiring", []) if c.get("face") is not None]
     frequency = orders.get("order_frequency")
+    avg_ticket = orders.get("avg_ticket")
     if not expiring or frequency is None:
         return None
     window = max(min(c["days"] for c in expiring), 1)
     expected_orders = max(1, int(frequency * window))
-    ranked = sorted(expiring, key=lambda c: (c["face"] or 0.0), reverse=True)
+    # 净价值判定
+    judged = []
+    for coupon in expiring:
+        entry = dict(coupon)
+        threshold = coupon.get("threshold")
+        if threshold and avg_ticket is not None and threshold > avg_ticket:
+            entry["net_value"] = round(max(0.0, (coupon["face"] or 0.0) - (threshold - avg_ticket)), 2)
+        else:
+            entry["net_value"] = coupon["face"]  # 无门槛或门槛内：净价值=面值
+        entry["category"] = "paper" if entry["net_value"] <= 0 else "worth"
+        judged.append(entry)
+    # 排程：净价值 > 0 的券按净价值降序排入点单次数
+    worth = [c for c in judged if c["category"] == "worth"]
+    worth.sort(key=lambda c: (c["net_value"] or 0.0), reverse=True)
     scheduled, missed = [], []
-    for idx, coupon in enumerate(ranked):
+    for idx, coupon in enumerate(worth):
         entry = dict(coupon)
         if idx < expected_orders:
             entry["slot"] = "第 {0} 单".format(idx + 1)
@@ -249,8 +288,13 @@ def schedule_coupons(coupons: Dict[str, Any], orders: Dict[str, Any]) -> Optiona
         else:
             entry["slot"] = "排不上"
             missed.append(entry)
-    realizable = sum(c["face"] for c in scheduled)
-    doomed = sum(c["face"] for c in missed)
+    # paper（纸面富贵）单独列出，计入 doomed 但不计入可实现
+    for coupon in [c for c in judged if c["category"] == "paper"]:
+        entry = dict(coupon)
+        entry["slot"] = "纸面富贵"
+        missed.append(entry)
+    realizable = sum(c["net_value"] for c in scheduled)
+    doomed = sum((c["face"] or 0.0) for c in missed)
     return {
         "window_days": window,
         "expected_orders": expected_orders,
@@ -376,13 +420,20 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
             schedule["window_days"], schedule["frequency"], schedule["expected_orders"]))
         lines.append("  券不是越多越好，用得上才算数：")
         for c in schedule["scheduled"]:
-            lines.append("    {0} → {1} ｜ {2} ｜ 净用掉 ¥{3:.2f}".format(
-                c["slot"], c["title"], "还剩 {0} 天".format(c["days"]), c["face"]))
+            lines.append("    {0} → {1} ｜ {2} ｜ 净价值 ¥{3:.2f}".format(
+                c["slot"], c["title"], "还剩 {0} 天".format(c["days"]), c["net_value"]))
+        paper = [c for c in schedule["missed"] if c.get("category") == "paper"]
+        if paper:
+            lines.append("  纸面富贵（门槛远超客单价，建议放弃）：")
+            for c in paper:
+                lines.append("    · {0} ｜ 面值 ¥{1:.2f} ｜ 净价值 ¥{2:.2f}".format(
+                    c["title"], c["face"], c["net_value"]))
         if schedule["missed"]:
             lines.append("  排不上（注定随券过期浪费 ¥{0:.2f}）：".format(schedule["doomed"]))
             for c in schedule["missed"]:
-                lines.append("    · {0} ｜ ¥{1:.2f} ｜ 还剩 {2} 天".format(c["title"], c["face"], c["days"]))
-        lines.append("  名义 ¥{0:.2f} → 可实现 ¥{1:.2f}，注定过期 ¥{2:.2f}。".format(
+                if c.get("category") != "paper":
+                    lines.append("    · {0} ｜ ¥{1:.2f} ｜ 还剩 {2} 天".format(c["title"], c["face"], c["days"]))
+        lines.append("  名义 ¥{0:.2f} → 可实现（净价值）¥{1:.2f}，注定过期 ¥{2:.2f}。".format(
             schedule["face_total"], schedule["realizable"], schedule["doomed"]))
         lines.append("  本月最该做的事：把排得上的券优先用掉——这笔钱不用就是纯损失。")
 
@@ -391,6 +442,9 @@ def render_report(coupons: Dict[str, Any], orders: Dict[str, Any],
     if orders["amount_count"]:
         lines.append("  订单数：{0} 单 ｜ 总支出：{1} ｜ 客单价：{2}".format(
             orders["order_count"], _fmt(orders["total_spend"]), _fmt(orders["avg_ticket"])))
+        if orders.get("free_order_count"):
+            lines.append("  （另有 {0} 笔 0 元订单——多为券核销或积分兑换，不计入客单价，但算一次点单机会）".format(
+                orders["free_order_count"]))
         if orders["top_items"]:
             lines.append("  高频单品：")
             for item in orders["top_items"]:
@@ -502,11 +556,15 @@ def render_html(coupons: Dict[str, Any], orders: Dict[str, Any],
                 grade, f' — {grade_note}' if grade_note else ''))
         if schedule:
             for c in schedule["scheduled"]:
-                rows.append('<div class="row"><span>🥇 {0} → {1}</span><span class="money good">{2}</span></div>'.format(
-                    _esc(c["title"]), c["slot"], _fmt_html(c["face"])))
+                rows.append('<div class="row"><span>🥇 {0} → {1}</span><span class="money good">净价值 {2}</span></div>'.format(
+                    _esc(c["title"]), c["slot"], _fmt_html(c["net_value"])))
             for c in schedule["missed"]:
-                rows.append('<div class="row"><span>⌛ {0}（排不上）</span><span class="money bad">{1}</span></div>'.format(
-                    _esc(c["title"]), _fmt_html(c["face"])))
+                if c.get("category") == "paper":
+                    rows.append('<div class="row"><span>📄 {0}（纸面富贵，建议放弃）</span><span class="money bad">{1}</span></div>'.format(
+                        _esc(c["title"]), _fmt_html(c["face"])))
+                else:
+                    rows.append('<div class="row"><span>⌛ {0}（排不上）</span><span class="money bad">{1}</span></div>'.format(
+                        _esc(c["title"]), _fmt_html(c["face"])))
     else:
         rows.append('<div class="row"><span class="muted">近 {0} 天内没有临期券。</span></div>'.format(EXPIRING_DAYS))
     coupons_block = "<h2>【一】临期券（{0} 天内到期）</h2>".format(EXPIRING_DAYS) + "".join(rows)
