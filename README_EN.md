@@ -34,6 +34,7 @@
 - [Tool coverage](#tool-coverage)
 - [FAQ](#faq)
 - [Release notes](#release-notes)
+- [Feedback](#feedback)
 - [Contributing](#contributing)
 - [Disclaimer](#disclaimer)
 - [License](#license)
@@ -71,6 +72,9 @@ One repo, three ways to use it:
 
 > **Design core: put the official app, Meituan, Douyin and the points mall on the
 > same table and compute the endgame — instead of optimizing within a single channel.**
+
+**Order safety**: no order is created without explicit user confirmation;
+order created ≠ paid — payment always happens on McDonald's official page.
 
 ## Features
 
@@ -229,17 +233,6 @@ Full catalog: [`references/tools.md`](references/tools.md); workflows:
 integration pitfalls (response shapes / units / polymorphic fields / snapshot
 freshness): [`references/mcp-pitfalls.md`](references/mcp-pitfalls.md).
 
-## Capability status
-
-| Status | Item |
-|---|---|
-| ✅ Verified | 35-tool connectivity & lifecycle · full 4-step pipeline (113 fixtures-regression tests) · calculate-price dual pricing · claim confirmation flow |
-| 🔜 Pending real-env re-check | `--probe` coupon valuation (code & tests ready; awaiting a real-token run documented in [verified-run](examples/verified-run.md)) |
-| ⚠️ Known limits | group-buy comparison is same-basis estimation (no public APIs) · nutrition constraints depend on menu nutrition fields · mainland China only · single-user non-commercial |
-
-**Order safety**: no order is created without explicit user confirmation;
-order created ≠ paid — payment always happens on McDonald's official page.
-
 ## FAQ
 
 **Q1: HTTP 401?** Token invalid/expired/missing. 401 is never retried; check the
@@ -272,8 +265,7 @@ More troubleshooting: [`references/error-handling.md`](references/error-handling
 
 ## Release notes
 
-Current version **v1.7.0**. Recent highlights:
-
+Current version **v2.0.3**. Recent highlights:/n
 | Version | Highlights |
 |---|---|
 | **v2.0.3** | optimizer auto-links group-buy final call (official vs deals in one pass) |
@@ -319,6 +311,14 @@ This project's code is released under the [MIT](LICENSE) license; running it
 relies on the McDonald's China MCP service and the upstream integration guide
 ([M-China/mcd-mcp-server](https://github.com/M-China/mcd-mcp-server)) — using
 those services is subject to their terms and upstream restrictions.
+
+## Feedback
+
+Questions or suggestions? Leave a note in [Discussions](https://github.com/yuxinlaile/McD-saver/discussions),
+or pick by scenario: 🐛 [Bug report](https://github.com/yuxinlaile/McD-saver/issues/new?template=bug_report.md) ·
+💡 [Feature request](https://github.com/yuxinlaile/McD-saver/issues/new?template=feature_request.md) ·
+🤝 [Share group-buy deals](https://github.com/yuxinlaile/McD-saver/discussions) (help the deal library grow).
+Every piece of feedback gets read — it is exactly how the calculator keeps improving for real-world use.
 
 ## Star History
 
