@@ -51,9 +51,14 @@
     .wrap { overflow-x:hidden; }
     header .brand { font-size:18px; }
   }
-  @media (max-width:860px) {
-    .sticky { order:-1; }  /* 结果卡在移动端置顶，选完即见，无需长滚动 */
-  }
+  .sticky { position:static; }  /* 移动端结果卡保持在页面底部 */
+  /* 悬浮计算按钮：仅移动端显示，贴右缘不遮挡勾选 */
+  .fab-calc { display:none; position:fixed; right:14px; bottom:22px; z-index:8;
+              width:56px; height:56px; border-radius:50%; border:none; cursor:pointer;
+              background:#c2410c; color:#fff; font-size:24px;
+              box-shadow:0 4px 14px rgba(0,0,0,.25); align-items:center; justify-content:center; }
+  .fab-calc:active { transform:scale(.94); }
+  @media (max-width:860px) { .fab-calc { display:flex; } }
   .item { display:flex; align-items:center; gap:10px; border:1.5px solid var(--line);
           border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none;
           transition:border-color .15s, background .15s, transform .05s; }
@@ -133,15 +138,16 @@
 
   <!-- 🔑 Token 快速导入（页面最上方显著位置）：生成命令 → 本地执行 → 粘贴回传 -->
   <div class="card" style="border:2px solid var(--amber);">
-    <h2>🔑 导入你的真实菜单（输入 Token，30 秒同步麦当劳 App 全量菜单）<span class="hint">推荐 · 显著位置</span></h2>
-    <div class="notice" style="margin:0 0 12px;">
+    <h2 class="desktop-flow">🔑 导入你的真实菜单（输入 Token，30 秒同步麦当劳 App 全量菜单）<span class="hint">推荐 · 显著位置</span></h2>
+    <h2 class="mobile-only" style="display:none;">🔑 导入真实菜单（手机版 · 两种方式，无需电脑）<span class="hint">推荐</span></h2>
+    <div class="notice desktop-flow" style="margin:0 0 12px;">
       下方示例菜单是 31 项参考快照；输入你的 <b>MCP Token</b>（<a href="https://open.mcd.cn/mcp" target="_blank" rel="noopener">open.mcd.cn/mcp</a> 申请），
       本页为你生成一条现成命令——<b>复制到本地终端执行</b>，把输出粘贴到下面输入框，即可用<b>实时全量菜单</b>跑同一套优化算法。
       Token 仅在你的浏览器内存中拼接命令，<b>不会上传到任何服务器</b>（本页为纯静态页面，且浏览器直连 MCP 受 CORS 限制，这是最安全便捷的路径）。
     </div>
     <div class="mobile-only" style="display:none;">
       <div class="notice" style="margin:0 0 10px;background:#fffbeb;">
-        <b>📱 手机上这样导入真实菜单（无需电脑）：</b><br>
+        <b>📱 两种方式（无需电脑）：</b><br>
         路径 ①　你已安装 AI Agent（WorkBuddy / Claude 等）并装好本技能——
         对它说「导入真实菜单」，把它输出的 <code>query-meals</code> JSON
         <b>复制</b>后粘贴到下方输入框即可。<br>
@@ -233,6 +239,7 @@
   </footer>
 </div>
 
+<button class="fab-calc" aria-label="计算最优方案" onclick="fabCalc()">🧮</button>
 <div class="toast" id="toast">链接已复制，发给朋友一起省钱 🍟</div>
 
 <script>
@@ -542,6 +549,12 @@ function unwrapItems(raw) {
     }
   }
   return Array.isArray(data) ? data.filter(x => x && typeof x === "object") : [];
+}
+
+function fabCalc() {
+  calc();
+  const el = document.getElementById("result");
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ---- 移动端：menu.json 文件导入 ----
