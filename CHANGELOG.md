@@ -189,7 +189,7 @@
 - GitHub Issue 模板（Bug 报告 / 功能建议）与 PR 模板（含自检清单）
 
 ### Changed
-- 仓库内容清理：`workbuddy.md` 由占位模板改为真实开发对话上下文记录
+- 仓库内容整理：新增开发过程记录文件（大赛专项奖励核验材料，现位于 `docs/development-log.md`）
   （敏感凭证脱敏）；README 移除悬空链接；MCP 配置示例的 Token 占位符
   统一为 `${MCD_MCP_TOKEN}` 环境变量形式；CI 语法检查纳入 `deal_compare.py`
 
