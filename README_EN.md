@@ -14,7 +14,7 @@
 ![License](https://img.shields.io/badge/License-MIT-orange)
 ![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)
 
-**[🎮 30-sec online demo (no sign-in)](https://yuxinlaile.github.io/McD-saver/demo.html) · [📦 Quick start](#quick-start) · [💬 Discussions](https://github.com/yuxinlaile/McD-saver/discussions) · [简体中文](README.md)**
+**[🎮 30-sec online demo (no sign-in)](https://yuxinlaile.github.io/McD-saver/demo.html) · [📦 Quick start](#quick-start) · [💬 Discussions](https://github.com/yuxinlaile/McD-saver/discussions) · [🛍️ Also on Agensi](https://www.agensi.io/creators/creator-571) · [简体中文](README.md)**
 
 </div>
 
