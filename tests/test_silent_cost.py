@@ -267,3 +267,64 @@ class TestSavingsGrade:
         schedule = schedule_coupons(coupons, orders)
         html = render_html(coupons, orders, analyze_points({}), None, schedule)
         assert "本期省钱等级" in html
+
+
+class TestNetValueSchedule:
+    """v1.7.2 新增：净价值模型（借鉴 mcd-coupon-strategist planner.py，MIT）。"""
+
+    def _orders(self, amounts):
+        data = [{"createTime": "2026-10-12", "totalAmount": a} for a in amounts]
+        return analyze_orders({"data": data}, today=datetime(2026, 10, 12))
+
+    def test_paper_coupon_discouraged(self):
+        # 满50减12，客单价 13 → 净价值 12-(50-13) = -25 → paper，不计入可实现
+        from silent_cost import analyze_coupons, schedule_coupons
+        coupons = analyze_coupons({"data": [
+            {"title": "满50减12", "parValue": 12.0, "validityEndTime": "2026-10-13"}]},
+            today=datetime(2026, 10, 12))
+        orders = self._orders([13.0])
+        schedule = schedule_coupons(coupons, orders)
+        paper = [c for c in schedule["missed"] if c["category"] == "paper"]
+        assert paper and paper[0]["slot"] == "纸面富贵"
+        assert paper[0]["net_value"] == 0.0
+        assert schedule["scheduled"] == []  # 无净价值为正的券 → 不排入任何点单
+        assert schedule["realizable"] == 0.0
+
+    def test_stretch_coupon_partial_net(self):
+        # 满40减10，客单价 36.12 → 净价值 10-(40-36.12) = 6.12 → stretch 仍排入
+        from silent_cost import analyze_coupons, schedule_coupons
+        coupons = analyze_coupons({"data": [
+            {"title": "满40减10", "parValue": 10.0, "validityEndTime": "2026-10-13"}]},
+            today=datetime(2026, 10, 12))
+        orders = self._orders([36.12])
+        schedule = schedule_coupons(coupons, orders)
+        assert abs(schedule["scheduled"][0]["net_value"] - 6.12) < 0.01
+        assert abs(schedule["realizable"] - 6.12) < 0.01
+
+    def test_no_threshold_keeps_face(self):
+        from silent_cost import analyze_coupons, schedule_coupons
+        coupons = analyze_coupons({"data": [
+            {"title": "免费脆薯饼", "parValue": 8.0, "validityEndTime": "2026-10-13"}]},
+            today=datetime(2026, 10, 12))
+        orders = self._orders([13.0])
+        schedule = schedule_coupons(coupons, orders)
+        assert schedule["scheduled"][0]["net_value"] == 8.0
+
+    def test_spending_basis_excludes_zero_amount(self):
+        # 0 元订单（券核销）不计入客单价，但计入点单频率（点单口径）
+        orders = self._orders([30.0, 0.0, 30.0])
+        assert orders["order_count"] == 3
+        assert orders["free_order_count"] == 1
+        assert orders["amount_count"] == 2
+        assert abs(orders["avg_ticket"] - 30.0) < 1e-9  # 客单价不被 0 元单拉低
+        assert abs(orders["order_frequency"] - 3 / 1) < 0.01
+
+    def test_report_mentions_paper_category(self):
+        from silent_cost import analyze_coupons, analyze_orders, render_report, schedule_coupons
+        coupons = analyze_coupons({"data": [
+            {"title": "满50减12", "parValue": 12.0, "validityEndTime": "2026-10-13"}]},
+            today=datetime(2026, 10, 12))
+        orders = self._orders([13.0])
+        schedule = schedule_coupons(coupons, orders)
+        text = render_report(coupons, orders, analyze_points({}), None, schedule)
+        assert "纸面富贵" in text and "净价值" in text
