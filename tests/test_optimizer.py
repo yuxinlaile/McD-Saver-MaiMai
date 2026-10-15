@@ -1,4 +1,6 @@
 """optimizer 券组合优化器单元测试。"""
+import json
+
 import pytest
 
 from optimizer import (
@@ -247,3 +249,61 @@ class TestNutritionConstraints:
         result = score_and_rank(plans, make_local_pricer(menu),
                                 max_sodium=800.0, nutrition_table={})
         assert result["ranked"][0].over_sodium
+
+
+class TestCrossChannelSection:
+    """v2.0.3 新增：optimizer 自动衔接团购终局建议。"""
+
+    def _setup_deals(self, tmp_path, monkeypatch):
+        import json
+        deals = [{"id": "t1", "platform": "meituan", "title": "满40减14代金券",
+                  "price": 25.9, "face_value": 40.0, "channel": "store",
+                  "time": "limited", "valid_until": "2026-11-30", "notes": ""}]
+        f = tmp_path / "deals.json"
+        f.write_text(json.dumps(deals), encoding="utf-8")
+        monkeypatch.setenv("MAIMAI_DEALS_FILE", str(f))
+
+    def _result(self, baseline, payable):
+        class P:
+            label = "测试方案"
+            payable = None
+
+        p = P()
+        p.payable = payable
+        return {"baseline": baseline, "ranked": [p]}
+
+    def test_section_rendered_with_deals(self, tmp_path, monkeypatch):
+        from optimizer import cross_channel_section
+        self._setup_deals(tmp_path, monkeypatch)
+        text = cross_channel_section(self._result(43.5, 33.5))
+        assert "团购终局建议" in text and "官方最优" in text and "团购最优" in text
+        # 折算：43.5 × (25.9/40) ≈ 28.17 < 33.5 → 建议团购
+        assert "团购估算更低" in text
+
+    def test_official_better_conclusion(self, tmp_path, monkeypatch):
+        from optimizer import cross_channel_section
+        deals = [{"id": "t1", "platform": "meituan", "title": "满40减14代金券",
+                  "price": 38.0, "face_value": 40.0, "channel": "store",
+                  "time": "limited", "valid_until": "2026-11-30", "notes": ""}]
+        f = tmp_path / "deals.json"
+        f.write_text(json.dumps(deals), encoding="utf-8")
+        monkeypatch.setenv("MAIMAI_DEALS_FILE", str(f))
+        text = cross_channel_section(self._result(43.5, 30.0))
+        assert "官方渠道（含券）已更优" in text
+
+    def test_empty_deals_returns_empty(self, tmp_path, monkeypatch):
+        from optimizer import cross_channel_section
+        f = tmp_path / "deals.json"
+        f.write_text('{"deals": []}', encoding="utf-8")
+        monkeypatch.setenv("MAIMAI_DEALS_FILE", str(f))
+        assert cross_channel_section(self._result(43.5, 33.5)) == ""
+
+    def test_no_deals_file_returns_empty(self, tmp_path, monkeypatch):
+        from optimizer import cross_channel_section
+        monkeypatch.setenv("MAIMAI_DEALS_FILE", str(tmp_path / "none.json"))
+        assert cross_channel_section(self._result(43.5, 33.5)) == ""
+
+    def test_zero_baseline_returns_empty(self, tmp_path, monkeypatch):
+        from optimizer import cross_channel_section
+        self._setup_deals(tmp_path, monkeypatch)
+        assert cross_channel_section(self._result(0, 0)) == ""
