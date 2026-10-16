@@ -329,3 +329,12 @@ If you find this useful, a ⭐ helps more McDonald's regulars discover it:
 [![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/McD-saver&type=Date)](https://star-history.com/#yuxinlaile/McD-saver&Date)
 
 </div>
+
+---
+
+<details><summary>🔍 Search keywords</summary>
+<br>
+
+McDonald's China, coupon optimizer, deal comparison, group-buy (Meituan/Douyin), points valuation, nutrition budget, silent cost audit, MCP agent skill, Claude, WorkBuddy, Cursor, Codex, CLI, online calculator, McD Saver, 麦当劳, 省钱, 优惠券, 团购, 积分, 组合优化
+
+</details>
