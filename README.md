@@ -312,3 +312,12 @@ CHANGELOG 补充 · **README 中英同步**。
 [![Star History Chart](https://api.star-history.com/svg?repos=yuxinlaile/McD-saver&type=Date)](https://star-history.com/#yuxinlaile/McD-saver&Date)
 
 </div>
+
+---
+
+<details><summary>🔍 搜索关键词</summary>
+<br>
+
+麦当劳省钱 优惠券管理 团购比价 美团抖音券 积分价值 Agent Skill MCP CLI 组合优化 净价值 沉默成本 营养约束 免登录试算 麦麦省钱助手 McD Saver 麦门 精算师 · McDonald's China, coupon optimizer, deal comparison, group-buy, points valuation, nutrition budget, silent cost audit, MCP agent skill, Claude, WorkBuddy, Cursor, Codex, online calculator
+
+</details>
